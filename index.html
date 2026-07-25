@@ -2,8 +2,17 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>중고폰 재고관리 시스템</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>aionio — 중고폰 재고관리</title>
+<!-- 어플처럼 설치되기 위한 설정 (PWA) -->
+<meta name="theme-color" content="#1F2A44">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="aionio">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
   :root {
@@ -24,9 +33,9 @@
     --text: #1D2433;
     --text-mute: #6B7280;
     --text-faint: #9AA2B1;
-    --radius: 10px;
+    --radius: 12px;
     --shadow-sm: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
-    --shadow-md: 0 4px 12px rgba(16,24,40,0.08);
+    --shadow-md: 0 6px 16px rgba(16,24,40,0.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -43,7 +52,7 @@
     background: var(--navy);
     background-image: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
     color: #fff;
-    padding: 16px 28px;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 28px 16px 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -52,90 +61,60 @@
   }
   .brand { display: flex; align-items: center; gap: 12px; }
   .brand-mark {
-    width: 36px;
-    height: 36px;
-    border-radius: 9px;
+    width: 36px; height: 36px; border-radius: 9px;
     background: linear-gradient(135deg, var(--accent) 0%, #7C93F0 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 16px;
-    letter-spacing: -0.5px;
-    box-shadow: var(--shadow-sm);
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px; letter-spacing: -0.5px;
+    box-shadow: var(--shadow-sm); flex-shrink: 0;
   }
-  .brand-text h1 {
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-  }
-  .brand-text .tagline {
-    font-size: 11px;
-    color: #A6B3D6;
-    margin-top: 1px;
-    font-weight: 500;
-  }
+  .brand-text h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .brand-text .tagline { font-size: 11px; color: #A6B3D6; margin-top: 1px; font-weight: 500; }
   .header-right { display: flex; align-items: center; gap: 14px; }
   .header-date { font-size: 12px; color: #B7C2E3; font-weight: 500; }
   .save-status { font-size: 11.5px; color: #8FE3B3; font-weight: 700; white-space: nowrap; }
   .logout-btn {
-    background: rgba(255,255,255,0.08);
-    color: #E7EAF3;
+    background: rgba(255,255,255,0.08); color: #E7EAF3;
     border: 1px solid rgba(255,255,255,0.18);
-    padding: 7px 14px;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
+    padding: 7px 14px; border-radius: 7px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
   }
   .logout-btn:hover { background: rgba(255,255,255,0.16); }
 
-  /* ===== Container ===== */
   .container { max-width: 1240px; margin: 0 auto; padding: 0 22px 32px 22px; }
 
-  /* ===== Tab strip (segmented pills) ===== */
+  /* ===== Tab strip ===== */
   .tabstrip {
-    display: flex;
-    gap: 6px;
+    display: flex; gap: 6px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 11px;
-    padding: 6px;
-    margin: 20px 0 20px 0;
+    border-radius: 11px; padding: 6px;
     width: fit-content;
     box-shadow: var(--shadow-sm);
   }
   .tab {
-    padding: 9px 20px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 13.5px;
-    color: var(--text-mute);
-    border-radius: 8px;
+    padding: 9px 18px; cursor: pointer;
+    font-weight: 700; font-size: 13.5px;
+    color: var(--text-mute); border-radius: 8px;
     transition: background 0.15s, color 0.15s;
     white-space: nowrap;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    -webkit-tap-highlight-color: transparent;
   }
-  .tab.active { background: var(--accent); color: #fff; }
+  .tab svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 6px rgba(62,99,221,0.35); }
   .tab:hover:not(.active) { background: var(--accent-light); color: var(--accent-dark); }
 
   .tab-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 20px 0 20px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; margin: 20px 0 20px 0;
   }
-  .tab-toolbar .tabstrip { margin: 0; }
   .data-tools { display: flex; gap: 8px; flex-wrap: wrap; }
 
   .page { display: none; }
   .page.active { display: block; }
 
-  /* ===== Panel (card) ===== */
+  /* ===== Panel ===== */
   .panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -145,54 +124,45 @@
     overflow: hidden;
   }
   .panel-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: flex; align-items: center; gap: 8px;
     padding: 15px 20px;
-    font-weight: 800;
-    font-size: 13.5px;
+    font-weight: 800; font-size: 13.5px;
     color: var(--text);
     border-bottom: 1px solid var(--border);
   }
   .panel-title::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
   }
+  .panel-search {
+    margin-left: auto;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-family: inherit;
+    width: 200px; max-width: 45%;
+    font-weight: 500;
+  }
+  .panel-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
   .panel-body { padding: 20px; }
 
-  .form-row {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-  }
+  .form-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
   .field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 140px; }
   .field label {
-    font-size: 11px;
-    color: var(--text-mute);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    font-size: 11px; color: var(--text-mute); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
   }
   .field input, .field select {
     border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 9px 11px;
-    font-size: 13.5px;
-    font-family: inherit;
-    background: var(--surface);
-    color: var(--text);
-    width: 100%;
-    height: 38px;
+    border-radius: 7px; padding: 9px 11px;
+    font-size: 13.5px; font-family: inherit;
+    background: var(--surface); color: var(--text);
+    width: 100%; height: 38px;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   .field input:focus, .field select:focus {
-    outline: none;
-    border-color: var(--accent);
+    outline: none; border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-light);
   }
   .field input[readonly] { background: #F7F8FC; color: var(--navy); font-weight: 700; }
@@ -201,69 +171,44 @@
   .field.xnarrow { flex: 0 1 100px; }
 
   .btn {
-    border: none;
-    border-radius: 8px;
-    padding: 9px 20px;
-    font-size: 13.5px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    height: 38px;
+    border: none; border-radius: 8px; padding: 9px 20px;
+    font-size: 13.5px; font-weight: 700; cursor: pointer;
+    font-family: inherit; height: 38px;
     transition: background 0.15s, transform 0.05s;
   }
+  .btn:disabled { opacity: 0.6; cursor: default; }
   .btn-main { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
   .btn-main:hover { background: var(--accent-dark); }
   .btn-main:active { transform: translateY(1px); }
   .btn-nav {
-    background: var(--surface);
-    color: var(--navy);
+    background: var(--surface); color: var(--navy);
     border: 1px solid var(--border);
-    padding: 7px 14px;
-    font-size: 13.5px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 700;
-    font-family: inherit;
+    padding: 7px 14px; font-size: 13.5px; border-radius: 8px;
+    cursor: pointer; font-weight: 700; font-family: inherit;
   }
   .btn-nav:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); }
   .btn-del {
-    background: var(--surface);
-    color: var(--danger);
+    background: var(--surface); color: var(--danger);
     border: 1px solid #F3C6C2;
-    padding: 5px 12px;
-    font-size: 11.5px;
-    border-radius: 999px;
-    cursor: pointer;
-    font-weight: 700;
-    font-family: inherit;
+    padding: 5px 12px; font-size: 11.5px; border-radius: 999px;
+    cursor: pointer; font-weight: 700; font-family: inherit;
     transition: background 0.15s, color 0.15s;
   }
   .btn-del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
   .btn-edit {
-    background: var(--surface);
-    color: var(--accent-dark);
+    background: var(--surface); color: var(--accent-dark);
     border: 1px solid #C7D3F7;
-    padding: 5px 12px;
-    font-size: 11.5px;
-    border-radius: 999px;
-    cursor: pointer;
-    font-weight: 700;
-    font-family: inherit;
+    padding: 5px 12px; font-size: 11.5px; border-radius: 999px;
+    cursor: pointer; font-weight: 700; font-family: inherit;
     transition: background 0.15s, color 0.15s;
     margin-right: 4px;
   }
   .btn-edit:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
   .btn-ghost {
-    background: var(--surface);
-    color: var(--text-mute);
+    background: var(--surface); color: var(--text-mute);
     border: 1px solid var(--border);
-    padding: 9px 18px;
-    font-size: 13.5px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 700;
-    font-family: inherit;
-    height: 38px;
+    padding: 9px 18px; font-size: 13.5px; border-radius: 8px;
+    cursor: pointer; font-weight: 700; font-family: inherit; height: 38px;
   }
   .btn-ghost:hover { background: #F1F2F6; }
 
@@ -274,34 +219,27 @@
   .table-wrap { overflow-x: auto; }
   table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 12.5px; }
   thead th {
-    background: #FAFBFD;
-    color: var(--text-mute);
-    padding: 11px 10px;
-    text-align: center;
-    font-weight: 700;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    background: #FAFBFD; color: var(--text-mute);
+    padding: 11px 10px; text-align: center;
+    font-weight: 700; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.3px;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
   }
   tbody td {
-    padding: 10px 10px;
-    text-align: center;
+    padding: 10px 10px; text-align: center;
     border-bottom: 1px solid #EEF0F4;
-    background: var(--surface);
-    color: var(--text);
+    background: var(--surface); color: var(--text);
+    white-space: nowrap; /* 좁은 화면에서 글자가 세로로 꺾이지 않게 (표는 가로 스크롤) */
   }
+  tbody tr:nth-child(even) td { background: #FBFCFE; }
   tbody tr:hover td { background: var(--accent-light); }
   tbody tr.editing-row td { background: var(--amber-light) !important; }
-  .empty-row td { padding: 30px; color: var(--text-faint); font-style: normal; font-weight: 500; }
+  .empty-row td { padding: 30px; color: var(--text-faint); font-weight: 500; }
 
   .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
+    display: inline-block; padding: 3px 10px;
+    border-radius: 999px; font-size: 11px; font-weight: 700;
   }
   .badge-stock { background: var(--success-light); color: var(--success); }
   .badge-sold { background: #EEF0F4; color: var(--text-mute); }
@@ -315,62 +253,29 @@
 
   /* ===== Status bar ===== */
   .statusbar {
-    display: flex;
-    gap: 28px;
-    flex-wrap: wrap;
-    background: var(--navy);
-    color: #B7C2E3;
-    padding: 12px 22px;
-    font-size: 12.5px;
-    font-weight: 500;
-    position: sticky;
-    bottom: 0;
+    display: flex; gap: 28px; flex-wrap: wrap;
+    background: var(--navy); color: #B7C2E3;
+    padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px)) 22px;
+    font-size: 12.5px; font-weight: 500;
+    position: sticky; bottom: 0;
   }
   .statusbar b { color: #fff; font-weight: 800; }
 
-  /* ===== Monthly / calendar tab ===== */
-  .month-nav {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    padding: 18px 20px;
-  }
-  .month-nav .month-label {
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--navy);
-    min-width: 120px;
-    text-align: center;
-  }
+  /* ===== Monthly ===== */
+  .month-nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 18px 20px; }
+  .month-nav .month-label { font-size: 17px; font-weight: 800; color: var(--navy); min-width: 120px; text-align: center; }
   .month-nav input[type="month"] {
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 7px 10px;
-    font-family: inherit;
-    font-size: 12.5px;
-    height: 36px;
+    border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 10px; font-family: inherit; font-size: 12.5px; height: 36px;
   }
-
-  .stat-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    padding: 0 20px 20px 20px;
-  }
+  .stat-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 0 20px 20px 20px; }
   .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 18px;
-    position: relative;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; position: relative;
   }
   .stat-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 4px;
-    border-radius: var(--radius) 0 0 var(--radius);
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; border-radius: var(--radius) 0 0 var(--radius);
     background: var(--accent);
   }
   .stat-card.margin::before { background: var(--success); }
@@ -378,27 +283,12 @@
   .stat-card .value { font-size: 21px; font-weight: 800; color: var(--navy); margin-top: 6px; letter-spacing: -0.3px; }
 
   .calendar-wrap { padding: 0 20px 20px 20px; }
-  .calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-  }
-  .cal-head {
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-mute);
-    padding: 4px 0 8px 0;
-    text-transform: uppercase;
-  }
+  .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-head { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-mute); padding: 4px 0 8px 0; text-transform: uppercase; }
   .cal-cell {
-    min-height: 68px;
-    background: var(--surface);
-    border: 1px solid #EEF0F4;
-    border-radius: 8px;
-    padding: 6px 7px;
-    font-size: 11px;
-    transition: border-color 0.15s;
+    min-height: 68px; background: var(--surface);
+    border: 1px solid #EEF0F4; border-radius: 8px;
+    padding: 6px 7px; font-size: 11px; transition: border-color 0.15s;
   }
   .cal-cell:hover { border-color: var(--border); }
   .cal-cell.empty { background: transparent; border: none; }
@@ -409,138 +299,131 @@
   .cal-tag.buy { background: var(--accent-light); color: var(--accent-dark); }
   .cal-tag.sell { background: var(--success-light); color: var(--success); }
 
-  /* ===== Login screen ===== */
-  #login-screen {
-    position: fixed;
-    inset: 0;
+  /* ===== Login / Setup screens ===== */
+  .overlay-screen {
+    position: fixed; inset: 0;
     background: radial-gradient(circle at 30% 20%, #2B3A5E 0%, #161E33 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 20px;
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+    overflow-y: auto;
   }
+  .overlay-screen.show { display: flex; }
   .login-card {
     background: var(--surface);
-    width: 340px;
-    max-width: 100%;
-    border-radius: 16px;
-    padding: 0 0 30px 0;
+    width: 340px; max-width: 100%;
+    border-radius: 16px; padding: 0 0 30px 0;
     box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    text-align: center;
-    overflow: hidden;
+    text-align: center; overflow: hidden;
   }
-  .login-accent {
-    height: 6px;
-    background: linear-gradient(90deg, var(--accent) 0%, #7C93F0 100%);
-  }
+  .login-card.wide { width: 460px; text-align: left; }
+  .login-accent { height: 6px; background: linear-gradient(90deg, var(--accent) 0%, #7C93F0 100%); }
   .login-mark {
-    width: 52px;
-    height: 52px;
-    margin: 26px auto 14px auto;
-    border-radius: 14px;
+    width: 52px; height: 52px;
+    margin: 26px auto 14px auto; border-radius: 14px;
     background: linear-gradient(135deg, var(--accent) 0%, #7C93F0 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 22px;
-    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 22px; color: #fff;
     box-shadow: var(--shadow-md);
   }
-  .login-card h1 {
-    font-size: 21px;
-    font-weight: 800;
-    color: var(--navy);
-    letter-spacing: -0.3px;
-    margin-bottom: 4px;
-  }
-  .login-card .login-sub {
-    font-size: 12px;
-    color: var(--text-faint);
-    margin-bottom: 24px;
-    font-weight: 500;
-  }
+  .login-card h1 { font-size: 21px; font-weight: 800; color: var(--navy); letter-spacing: -0.3px; margin-bottom: 4px; text-align: center; }
+  .login-card .login-sub { font-size: 12px; color: var(--text-faint); margin-bottom: 24px; font-weight: 500; text-align: center; }
   .login-field { text-align: left; margin: 0 30px 12px 30px; }
   .login-field label {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-mute);
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    display: block; font-size: 11px; font-weight: 700;
+    color: var(--text-mute); margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 0.3px;
   }
   .login-field input {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 13.5px;
-    font-family: inherit;
-    height: 40px;
+    width: 100%; border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 13.5px; font-family: inherit; height: 40px;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .login-field input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-light);
-  }
+  .login-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
   .login-btn {
     width: calc(100% - 60px);
     margin: 6px 30px 0 30px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 11px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 8px; padding: 11px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
   }
   .login-btn:hover { background: var(--accent-dark); }
-  .login-error {
-    color: var(--danger);
-    font-size: 12px;
-    margin-top: 12px;
-    min-height: 15px;
-    font-weight: 600;
+  .login-btn:disabled { opacity: 0.6; cursor: default; }
+  .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 15px; font-weight: 600; text-align: center; padding: 0 20px; }
+  .setup-steps { margin: 0 30px 20px 30px; font-size: 13px; color: var(--text); }
+  .setup-steps li { margin-bottom: 8px; margin-left: 18px; }
+  .setup-note {
+    margin: 0 30px; padding: 12px 14px;
+    background: var(--amber-light); color: var(--amber);
+    border-radius: 8px; font-size: 12px; font-weight: 600;
   }
   #app { display: none; }
 
-  /* ===== Responsive ===== */
   @media (max-width: 860px) {
     .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .titlebar { padding: 14px 18px; }
     .container { padding: 0 14px 24px 14px; }
   }
+  @media (max-width: 640px) {
+    /* 모바일: 탭을 화면 전체 폭 3등분 (어플 느낌) */
+    .tab-toolbar { flex-direction: column; align-items: stretch; }
+    .tabstrip { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+    .tab { padding: 11px 0; }
+    .data-tools { justify-content: center; }
+    .data-tools .btn-nav { flex: 1; }
+    .btn, .btn-nav, .btn-ghost { min-height: 42px; }
+  }
   @media (max-width: 540px) {
-    .stat-cards { grid-template-columns: 1fr; }
-    .cal-cell { min-height: 46px; font-size: 10px; }
+    .stat-cards { grid-template-columns: 1fr 1fr; gap: 9px; }
+    .stat-card .value { font-size: 18px; }
+    .cal-cell { min-height: 46px; font-size: 10px; padding: 4px 5px; }
     .cal-tag { font-size: 9px; padding: 1px 4px; }
     .header-date { display: none; }
+    .panel-search { width: 140px; }
+    .panel-body { padding: 16px; }
+    .form-row { gap: 11px; }
+    .field.narrow, .field.xnarrow { flex: 1 1 46%; }
   }
 </style>
 </head>
 <body>
 
-<div id="login-screen">
+<!-- 파이어베이스 설정을 아직 안 붙여넣었을 때 표시되는 안내 화면 -->
+<div class="overlay-screen" id="setup-screen">
+  <div class="login-card wide">
+    <div class="login-accent"></div>
+    <div class="login-mark">a</div>
+    <h1>파이어베이스 설정이 필요합니다</h1>
+    <div class="login-sub">딱 한 번만 하면 됩니다 (약 10분)</div>
+    <ol class="setup-steps">
+      <li>함께 받은 <b>「파이어베이스 설치가이드」</b> 파일을 엽니다.</li>
+      <li>가이드 1~5단계를 따라 파이어베이스 무료 프로젝트를 만듭니다.</li>
+      <li>가이드 6단계에서 복사한 설정값을 이 파일(index.html)을 메모장으로 열어
+          <b>"파이어베이스 설정" 부분</b>에 붙여넣습니다.</li>
+      <li>파일을 저장하고 깃허브에 다시 올리면 끝!</li>
+    </ol>
+    <div class="setup-note">이 화면이 계속 보인다면 아직 설정값이 붙여넣어지지 않은 것입니다.</div>
+  </div>
+</div>
+
+<!-- 로그인 화면 -->
+<div class="overlay-screen" id="login-screen">
   <div class="login-card">
     <div class="login-accent"></div>
     <div class="login-mark">a</div>
     <h1>aionio</h1>
     <div class="login-sub">로그인 후 이용해주세요</div>
     <div class="login-field">
-      <label>아이디</label>
-      <input type="text" id="login_id" autocomplete="off" onkeydown="if(event.key==='Enter')document.getElementById('login_pw').focus()">
+      <label>이메일</label>
+      <input type="email" id="login_email" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login_pw').focus()">
     </div>
     <div class="login-field">
       <label>비밀번호</label>
-      <input type="password" id="login_pw" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="login_pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <button class="login-btn" id="login_btn" onclick="doLogin()">로그인</button>
     <div class="login-error" id="login_error"></div>
   </div>
 </div>
@@ -555,7 +438,7 @@
     </div>
   </div>
   <div class="header-right">
-    <div class="save-status" id="save_status">● 대기 중</div>
+    <div class="save-status" id="save_status">● 연결 중...</div>
     <div class="header-date" id="header_date"></div>
     <button class="logout-btn" onclick="doLogout()">로그아웃</button>
   </div>
@@ -564,14 +447,23 @@
 <div class="container">
 <div class="tab-toolbar">
   <div class="tabstrip">
-    <div class="tab active" data-tab="purchase" onclick="switchTab('purchase')">매입관리</div>
-    <div class="tab" data-tab="sales" onclick="switchTab('sales')">판매관리</div>
-    <div class="tab" data-tab="monthly" onclick="switchTab('monthly')">월별현황</div>
+    <div class="tab active" data-tab="purchase" onclick="switchTab('purchase')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M8.5 8.5L12 12l3.5-3.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+      매입관리
+    </div>
+    <div class="tab" data-tab="sales" onclick="switchTab('sales')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l10 10-6 6L4 10V4z"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+      판매관리
+    </div>
+    <div class="tab" data-tab="monthly" onclick="switchTab('monthly')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 11h16"/><path d="M8 3.5v4M16 3.5v4"/></svg>
+      월별현황
+    </div>
   </div>
   <div class="data-tools">
-    <button class="btn-nav" onclick="exportBackup()">⬇ 백업 저장</button>
-    <button class="btn-nav" onclick="document.getElementById('import_file').click()">⬆ 백업 불러오기</button>
-    <input type="file" id="import_file" accept="application/json" style="display:none" onchange="handleImportFile(event)">
+    <button class="btn-nav" onclick="exportCsv()">⬇ 엑셀(CSV) 내려받기</button>
+    <button class="btn-nav" onclick="document.getElementById('legacy_file').click()">⬆ 예전 백업 가져오기</button>
+    <input type="file" id="legacy_file" accept="application/json" style="display:none" onchange="handleLegacyFile(event)">
   </div>
 </div>
 
@@ -591,7 +483,7 @@
         </div>
         <div class="field wide">
           <label>IMEI</label>
-          <input type="text" id="p_imei" placeholder="IMEI 번호 입력">
+          <input type="text" id="p_imei" placeholder="IMEI 번호 입력" inputmode="numeric">
         </div>
         <div class="field xnarrow">
           <label>색상</label>
@@ -608,7 +500,7 @@
         </div>
         <div class="field narrow">
           <label>매입가 (원)</label>
-          <input type="number" id="p_cost" placeholder="0">
+          <input type="text" id="p_cost" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this)">
         </div>
         <div class="field wide">
           <label>특이사항</label>
@@ -622,7 +514,9 @@
   </div>
 
   <div class="panel">
-    <div class="panel-title">매입 목록</div>
+    <div class="panel-title">매입 목록
+      <input class="panel-search" id="p_search" placeholder="모델명·IMEI 검색" oninput="setPurchaseFilter(this.value)">
+    </div>
     <div class="panel-body" style="padding:0;">
       <div class="table-wrap"><table>
         <thead>
@@ -678,7 +572,7 @@
         </div>
         <div class="field narrow">
           <label>판매가 (원)</label>
-          <input type="number" id="s_price" placeholder="0" oninput="calcMargin()">
+          <input type="text" id="s_price" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this); calcMargin();">
         </div>
         <div class="field narrow">
           <label>마진</label>
@@ -692,7 +586,9 @@
   </div>
 
   <div class="panel">
-    <div class="panel-title">판매 목록</div>
+    <div class="panel-title">판매 목록
+      <input class="panel-search" id="s_search" placeholder="모델명·IMEI 검색" oninput="setSalesFilter(this.value)">
+    </div>
     <div class="panel-body" style="padding:0;">
       <div class="table-wrap"><table>
         <thead>
@@ -721,11 +617,11 @@
   <div class="panel">
     <div class="panel-title">월 선택</div>
     <div class="month-nav">
-      <button class="btn-nav" onclick="MonthlyModule.shiftMonth(-1)">◀</button>
-      <div class="month-label" id="m_month_label">2026년 7월</div>
-      <button class="btn-nav" onclick="MonthlyModule.shiftMonth(1)">▶</button>
-      <input type="month" id="m_month_input" onchange="MonthlyModule.jumpTo(this.value)">
-      <button class="btn-nav" onclick="MonthlyModule.jumpToday()">이번달</button>
+      <button class="btn-nav" onclick="monthlyShift(-1)">◀</button>
+      <div class="month-label" id="m_month_label"></div>
+      <button class="btn-nav" onclick="monthlyShift(1)">▶</button>
+      <input type="month" id="m_month_input" onchange="monthlyJump(this.value)">
+      <button class="btn-nav" onclick="monthlyToday()">이번달</button>
     </div>
 
     <div class="stat-cards">
@@ -804,571 +700,797 @@
 </div>
 </div>
 
+<!-- Firebase (compat SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
 <script>
-/* ============ 로그인 ============ */
-const VALID_ID = 'rlatjdehd110';
-const VALID_PW = 'tjdehd0259';
+/* ================================================================
+   ▼▼▼ 파이어베이스 설정 — 이 부분만 바꾸면 됩니다! ▼▼▼
 
-function doLogin() {
-  const id = document.getElementById('login_id').value.trim();
-  const pw = document.getElementById('login_pw').value;
-  const err = document.getElementById('login_error');
-  if (id === VALID_ID && pw === VALID_PW) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    err.textContent = '';
-  } else {
-    err.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
-    document.getElementById('login_pw').value = '';
-    document.getElementById('login_pw').focus();
-  }
+   「파이어베이스 설치가이드」 6단계에서 복사한 firebaseConfig 의
+   따옴표 안 값들을 아래에 그대로 붙여넣으세요.
+   (복사한 내용 전체를 아래 const FIREBASE_CONFIG = { ... };
+    모양에 맞춰 통째로 바꿔치기해도 됩니다)
+================================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDEOtMae8Yxi0pD9Mv-sA498fT6Smvr72A",
+  authDomain: "aion2-55923.firebaseapp.com",
+  projectId: "aion2-55923",
+  storageBucket: "aion2-55923.firebasestorage.app",
+  messagingSenderId: "847980602515",
+  appId: "1:847980602515:web:5ccf664df249b4f88e1966"
+};
+/* ▲▲▲ 여기까지 — 아래 코드는 건드릴 필요 없습니다 ▲▲▲ */
+
+
+/* ============ 공통 유틸 ============ */
+function $(id) { return document.getElementById(id); }
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = (str == null ? '' : String(str));
+  return div.innerHTML;
 }
-
-function doLogout() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login_id').value = '';
-  document.getElementById('login_pw').value = '';
-  document.getElementById('login_id').focus();
-}
-
-function renderHeaderDate() {
-  const d = new Date();
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  document.getElementById('header_date').textContent =
-    `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
-}
-renderHeaderDate();
-document.getElementById('login_id').focus();
-
 function todayStr() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
+function comma(n) { return Number(n || 0).toLocaleString(); }
+// "1,234,000" / "1234000" → 1234000
+function parseMoney(v) {
+  const digits = String(v == null ? '' : v).replace(/[^\d]/g, '');
+  return digits ? Number(digits) : 0;
+}
+// 금액 입력칸에 자동으로 콤마를 찍어줌
+function formatMoneyInput(el) {
+  const digits = el.value.replace(/[^\d]/g, '');
+  el.value = digits ? Number(digits).toLocaleString() : '';
+}
+function gradeBadge(g) { return `<span class="badge badge-grade-${escapeHtml(g)}">${escapeHtml(g)}</span>`; }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-  document.getElementById('page-purchase').classList.toggle('active', name === 'purchase');
-  document.getElementById('page-sales').classList.toggle('active', name === 'sales');
-  document.getElementById('page-monthly').classList.toggle('active', name === 'monthly');
-  if (name === 'sales') refreshImeiList();
-  if (name === 'monthly') MonthlyModule.render();
+function renderHeaderDate() {
+  const d = new Date();
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  $('header_date').textContent =
+    `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
 }
 
-/* ============ 매입관리 (IIFE) ============ */
-const PurchaseModule = (function() {
-  let purchases = []; // {id, date, model, imei, color, grade, cost, note, status}
-  let nextId = 1;
-  let editId = null;
+/* ============ 전역 상태 ============ */
+let auth = null, db = null, uid = null;
+let purchases = [];   // {id, date, model, imei, color, grade, cost, note, status, createdAt}
+let sales = [];       // {id, purchaseId, date, model, imei, color, grade, cost, price, margin, createdAt}
+let unsubP = null, unsubS = null;
+let pEditId = null;                       // 수정 중인 매입 문서 id
+let sEditId = null, sEditPurchaseId = null; // 수정 중인 판매 문서 id / 원래 연결된 매입 id
+let sMatched = null;                      // 판매 등록 폼에서 IMEI로 찾은 매입 건
+let pFilter = '', sFilter = '';
+let busy = false;                         // 중복 저장 방지
 
-  function gradeBadge(g) {
-    return `<span class="badge badge-grade-${g}">${g}</span>`;
+function isConfigured() {
+  return FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('여기에') === -1;
+}
+function pcol() { return db.collection('users').doc(uid).collection('purchases'); }
+function scol() { return db.collection('users').doc(uid).collection('sales'); }
+
+/* ============ 저장 상태 표시 ============ */
+function setStatus(text, good) {
+  const el = $('save_status');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = good ? '#8FE3B3' : '#F4C88F';
+}
+function nowHM() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+async function saveWrite(promise) {
+  setStatus('● 저장 중...', true);
+  try {
+    await promise;
+    setStatus('● 자동 저장됨 ' + nowHM(), true);
+    return true;
+  } catch (e) {
+    console.error(e);
+    setStatus('● 저장 실패', false);
+    alert('저장에 실패했습니다.\n인터넷 연결을 확인해주세요.\n\n(' + (e && e.message ? e.message : e) + ')');
+    return false;
+  }
+}
+window.addEventListener('offline', () => setStatus('● 오프라인 — 연결되면 자동 저장됩니다', false));
+window.addEventListener('online', () => setStatus('● 실시간 동기화 켜짐', true));
+
+/* ============ 로그인 / 로그아웃 ============ */
+const AUTH_ERROR_MSG = {
+  'auth/invalid-email': '이메일 형식이 올바르지 않습니다.',
+  'auth/user-disabled': '사용이 중지된 계정입니다.',
+  'auth/user-not-found': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/wrong-password': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/invalid-credential': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/invalid-login-credentials': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/too-many-requests': '시도가 너무 많았습니다. 잠시 후 다시 시도해주세요.',
+  'auth/network-request-failed': '인터넷 연결을 확인해주세요.'
+};
+
+async function doLogin() {
+  const email = $('login_email').value.trim();
+  const pw = $('login_pw').value;
+  const err = $('login_error');
+  const btn = $('login_btn');
+  if (!email || !pw) { err.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
+  err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = '로그인 중...';
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    // 이후 처리는 onAuthStateChanged 에서
+  } catch (e) {
+    err.textContent = AUTH_ERROR_MSG[e.code] || ('로그인에 실패했습니다. (' + e.code + ')');
+    $('login_pw').value = '';
+    $('login_pw').focus();
+  }
+  btn.disabled = false;
+  btn.textContent = '로그인';
+}
+
+function doLogout() {
+  if (!confirm('로그아웃 하시겠습니까?')) return;
+  auth.signOut();
+}
+
+/* ============ 실시간 동기화 ============ */
+function sortByDate(arr) {
+  return arr.sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    const at = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : Infinity;
+    const bt = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : Infinity;
+    return at - bt;
+  });
+}
+
+function startListeners() {
+  stopListeners();
+  unsubP = pcol().onSnapshot(snap => {
+    purchases = sortByDate(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    renderPurchases();
+    renderMonthly();
+    refreshImeiList();
+    setStatus('● 실시간 동기화 켜짐', true);
+    if (!snap.metadata.fromCache) maybeOfferLegacyImport();
+  }, e => {
+    console.error(e);
+    if (e.code === 'permission-denied') {
+      setStatus('● 접근 권한 오류', false);
+      alert('데이터 접근 권한이 없습니다.\n설치가이드 4단계(보안 규칙)를 다시 확인해주세요.');
+    }
+  });
+  unsubS = scol().onSnapshot(snap => {
+    sales = sortByDate(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    renderSales();
+    renderMonthly();
+  }, e => console.error(e));
+}
+function stopListeners() {
+  if (unsubP) { unsubP(); unsubP = null; }
+  if (unsubS) { unsubS(); unsubS = null; }
+}
+
+/* ============ 탭 ============ */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  $('page-purchase').classList.toggle('active', name === 'purchase');
+  $('page-sales').classList.toggle('active', name === 'sales');
+  $('page-monthly').classList.toggle('active', name === 'monthly');
+  if (name === 'sales') refreshImeiList();
+  if (name === 'monthly') renderMonthly();
+}
+
+/* ============ 매입관리 ============ */
+function matchesFilter(item, keyword) {
+  if (!keyword) return true;
+  const k = keyword.toLowerCase();
+  return ['model', 'imei', 'color', 'note'].some(f =>
+    item[f] && String(item[f]).toLowerCase().includes(k));
+}
+function setPurchaseFilter(v) { pFilter = v.trim(); renderPurchases(); }
+function setSalesFilter(v) { sFilter = v.trim(); renderSales(); }
+
+function renderPurchases() {
+  const body = $('p_table_body');
+  body.innerHTML = '';
+  const list = purchases.filter(p => matchesFilter(p, pFilter));
+  if (list.length === 0) {
+    const msg = purchases.length === 0 ? '등록된 매입 내역이 없습니다.' : '검색 결과가 없습니다.';
+    body.innerHTML = `<tr class="empty-row"><td colspan="10">${msg}</td></tr>`;
+  } else {
+    list.forEach((p, i) => {
+      const tr = document.createElement('tr');
+      if (p.id === pEditId) tr.classList.add('editing-row');
+      const badge = p.status === '재고'
+        ? '<span class="badge badge-stock">재고</span>'
+        : '<span class="badge badge-sold">판매완료</span>';
+      const delBtn = p.status === '재고'
+        ? `<button class="btn-del" onclick="removePurchase('${p.id}')">삭제</button>`
+        : '-';
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${escapeHtml(p.date)}</td>
+        <td style="text-align:left;">${escapeHtml(p.model)}</td>
+        <td>${escapeHtml(p.imei)}</td>
+        <td>${escapeHtml(p.color || '-')}</td>
+        <td>${gradeBadge(p.grade)}</td>
+        <td style="text-align:right;">${comma(p.cost)}</td>
+        <td style="text-align:left;">${escapeHtml(p.note || '-')}</td>
+        <td>${badge}</td>
+        <td><button class="btn-edit" onclick="editPurchaseRow('${p.id}')">수정</button>${delBtn}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+  updateStatusBar();
+}
+
+async function submitPurchase() {
+  if (busy) return;
+  const hint = $('p_hint');
+  const date = $('p_date').value || todayStr();
+  const model = $('p_model').value.trim();
+  const imei = $('p_imei').value.trim();
+  const color = $('p_color').value.trim();
+  const grade = $('p_grade').value;
+  const cost = parseMoney($('p_cost').value);
+  const note = $('p_note').value.trim();
+
+  if (!model || !imei) {
+    hint.textContent = '모델명과 IMEI는 필수 입력 항목입니다.';
+    hint.classList.remove('ok');
+    return;
+  }
+  // 같은 IMEI가 이미 "재고"로 있으면 중복 등록 차단
+  // (판매완료된 기기는 다시 매입할 수 있어야 하므로 허용 — 재매입)
+  if (purchases.some(p => p.imei === imei && p.id !== pEditId && p.status === '재고')) {
+    hint.textContent = '이미 재고에 등록된 IMEI입니다.';
+    hint.classList.remove('ok');
+    return;
   }
 
-  function render() {
-    const body = document.getElementById('p_table_body');
-    body.innerHTML = '';
-    if (purchases.length === 0) {
-      body.innerHTML = '<tr class="empty-row"><td colspan="10">등록된 매입 내역이 없습니다.</td></tr>';
-    } else {
-      purchases.forEach((p, i) => {
-        const tr = document.createElement('tr');
-        if (p.id === editId) tr.classList.add('editing-row');
-        const badge = p.status === '재고'
-          ? '<span class="badge badge-stock">재고</span>'
-          : '<span class="badge badge-sold">판매완료</span>';
-        const delBtn = p.status === '재고'
-          ? `<button class="btn-del" onclick="PurchaseModule.remove(${p.id})">삭제</button>`
-          : '-';
-        const editBtn = `<button class="btn-edit" onclick="editPurchaseRow(${p.id})">수정</button>`;
-        tr.innerHTML = `
+  busy = true;
+  let ok;
+  if (pEditId) {
+    // 수정: 연결된 판매 기록이 있으면 함께 갱신
+    const batch = db.batch();
+    batch.update(pcol().doc(pEditId), { date, model, imei, color, grade, cost, note });
+    const linked = sales.find(s => s.purchaseId === pEditId);
+    if (linked) {
+      batch.update(scol().doc(linked.id), {
+        model, imei, color, grade, cost,
+        margin: (Number(linked.price) || 0) - cost
+      });
+    }
+    ok = await saveWrite(batch.commit());
+    if (ok) {
+      pEditId = null;
+      hint.textContent = '매입 정보가 수정되었습니다.' + (linked ? ' (판매 기록도 함께 갱신)' : '');
+      hint.classList.add('ok');
+    }
+  } else {
+    ok = await saveWrite(pcol().add({
+      date, model, imei, color, grade, cost, note,
+      status: '재고',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }));
+    if (ok) {
+      hint.textContent = '매입이 등록되었습니다.';
+      hint.classList.add('ok');
+    }
+  }
+  busy = false;
+  if (ok) resetPurchaseForm();
+}
+
+function editPurchaseRow(id) {
+  const p = purchases.find(p => p.id === id);
+  if (!p) return;
+  pEditId = id;
+  $('p_date').value = p.date;
+  $('p_model').value = p.model;
+  $('p_imei').value = p.imei;
+  $('p_color').value = p.color || '';
+  $('p_grade').value = p.grade;
+  $('p_cost').value = comma(p.cost);
+  $('p_note').value = p.note || '';
+  $('p_submit_btn').textContent = '수정 완료';
+  $('p_cancel_btn').style.display = 'inline-block';
+  const hint = $('p_hint');
+  hint.textContent = '매입 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
+  hint.classList.remove('ok');
+  renderPurchases();
+  $('p_model').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelPurchaseEdit() {
+  pEditId = null;
+  resetPurchaseForm();
+  $('p_hint').textContent = '수정이 취소되었습니다.';
+  $('p_hint').classList.remove('ok');
+  renderPurchases();
+}
+
+function resetPurchaseForm() {
+  $('p_model').value = '';
+  $('p_imei').value = '';
+  $('p_color').value = '';
+  $('p_grade').value = 'S';
+  $('p_cost').value = '';
+  $('p_note').value = '';
+  $('p_date').value = todayStr();
+  $('p_submit_btn').textContent = '매입 등록';
+  $('p_cancel_btn').style.display = 'none';
+}
+
+async function removePurchase(id) {
+  const p = purchases.find(p => p.id === id);
+  if (!p) return;
+  if (p.status !== '재고') {
+    alert('판매완료된 항목은 매입 목록에서 바로 삭제할 수 없습니다.\n판매관리에서 해당 판매를 먼저 취소해주세요.');
+    return;
+  }
+  if (!confirm(`[${p.model}]\n이 매입 건을 삭제하시겠습니까?`)) return;
+  if (pEditId === id) { pEditId = null; resetPurchaseForm(); }
+  await saveWrite(pcol().doc(id).delete());
+}
+
+/* ============ 판매관리 ============ */
+function renderSales() {
+  const body = $('s_table_body');
+  body.innerHTML = '';
+  const list = sales.filter(s => matchesFilter(s, sFilter));
+  if (list.length === 0) {
+    const msg = sales.length === 0 ? '등록된 판매 내역이 없습니다.' : '검색 결과가 없습니다.';
+    body.innerHTML = `<tr class="empty-row"><td colspan="11">${msg}</td></tr>`;
+  } else {
+    list.forEach((s, i) => {
+      const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
+      const marginRate = s.price > 0 ? ((s.margin / s.price) * 100).toFixed(1) : '0.0';
+      const tr = document.createElement('tr');
+      if (s.id === sEditId) tr.classList.add('editing-row');
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${escapeHtml(s.date)}</td>
+        <td style="text-align:left;">${escapeHtml(s.model)}</td>
+        <td>${escapeHtml(s.imei)}</td>
+        <td>${escapeHtml(s.color || '-')}</td>
+        <td>${escapeHtml(s.grade || '-')}</td>
+        <td style="text-align:right;">${comma(s.cost)}</td>
+        <td style="text-align:right;">${comma(s.price)}</td>
+        <td class="${marginClass}">${comma(s.margin)}</td>
+        <td class="${marginClass}">${marginRate}%</td>
+        <td><button class="btn-edit" onclick="editSaleRow('${s.id}')">수정</button><button class="btn-del" onclick="cancelSale('${s.id}')">취소</button></td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+  updateStatusBar();
+}
+
+function refreshImeiList() {
+  const datalist = $('s_imei_list');
+  if (!datalist) return;
+  datalist.innerHTML = '';
+  const candidates = purchases.filter(p =>
+    p.status === '재고' || (sEditId && p.id === sEditPurchaseId));
+  candidates.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.imei;
+    opt.label = `${p.model} (매입가 ${comma(p.cost)}원)`;
+    datalist.appendChild(opt);
+  });
+}
+
+function findSellable(imei) {
+  const t = imei.trim();
+  // 판매 수정 중이면 원래 연결돼 있던 기기를 우선 매칭
+  if (sEditId) {
+    const orig = purchases.find(p => p.id === sEditPurchaseId && p.imei === t);
+    if (orig) return orig;
+  }
+  return purchases.find(p => p.imei === t && p.status === '재고');
+}
+
+function lookupImei() {
+  const imei = $('s_imei').value;
+  const hint = $('s_hint');
+  if (!imei.trim()) {
+    $('s_model').value = ''; $('s_cost').value = '';
+    $('s_color').value = ''; $('s_grade').value = '';
+    sMatched = null;
+    hint.textContent = '';
+    calcMargin();
+    return;
+  }
+  const found = findSellable(imei);
+  if (found) {
+    $('s_model').value = found.model;
+    $('s_cost').value = comma(found.cost) + ' 원';
+    $('s_color').value = found.color || '-';
+    $('s_grade').value = found.grade;
+    sMatched = found;
+    hint.textContent = `일치하는 매입 내역을 찾았습니다: ${found.model}`;
+    hint.classList.add('ok');
+  } else {
+    $('s_model').value = ''; $('s_cost').value = '';
+    $('s_color').value = ''; $('s_grade').value = '';
+    sMatched = null;
+    hint.textContent = '재고에서 일치하는 IMEI를 찾을 수 없습니다.';
+    hint.classList.remove('ok');
+  }
+  calcMargin();
+}
+
+function calcMargin() {
+  const priceField = $('s_price');
+  const marginField = $('s_margin');
+  if (!sMatched || !priceField.value) {
+    marginField.value = '';
+    return;
+  }
+  marginField.value = comma(parseMoney(priceField.value) - sMatched.cost) + ' 원';
+}
+
+async function submitSale() {
+  if (busy) return;
+  const hint = $('s_hint');
+  const date = $('s_date').value || todayStr();
+  const price = parseMoney($('s_price').value);
+  if (!sMatched) {
+    hint.textContent = '재고에 있는 IMEI를 먼저 입력해주세요.';
+    hint.classList.remove('ok');
+    return;
+  }
+  if (!price || price <= 0) {
+    hint.textContent = '판매가를 입력해주세요.';
+    hint.classList.remove('ok');
+    return;
+  }
+
+  busy = true;
+  const p = sMatched;
+  const saleData = {
+    purchaseId: p.id,
+    date,
+    model: p.model, imei: p.imei, color: p.color || '', grade: p.grade,
+    cost: p.cost, price,
+    margin: price - p.cost
+  };
+  const batch = db.batch();
+  let ok;
+  if (sEditId) {
+    // 판매 수정: 기기가 바뀌었으면 이전 기기는 재고로 복원
+    if (p.id !== sEditPurchaseId) {
+      batch.update(pcol().doc(sEditPurchaseId), { status: '재고' });
+      batch.update(pcol().doc(p.id), { status: '판매완료' });
+    }
+    batch.update(scol().doc(sEditId), saleData);
+    ok = await saveWrite(batch.commit());
+    if (ok) {
+      sEditId = null; sEditPurchaseId = null;
+      hint.textContent = '판매 정보가 수정되었습니다.';
+      hint.classList.add('ok');
+    }
+  } else {
+    const saleRef = scol().doc();
+    saleData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    batch.set(saleRef, saleData);
+    batch.update(pcol().doc(p.id), { status: '판매완료' });
+    ok = await saveWrite(batch.commit());
+    if (ok) {
+      hint.textContent = '판매가 등록되었습니다.';
+      hint.classList.add('ok');
+    }
+  }
+  busy = false;
+  if (ok) resetSalesForm();
+}
+
+function editSaleRow(id) {
+  const s = sales.find(s => s.id === id);
+  if (!s) return;
+  sEditId = id;
+  sEditPurchaseId = s.purchaseId;
+  refreshImeiList();
+  $('s_date').value = s.date;
+  $('s_imei').value = s.imei;
+  lookupImei();
+  $('s_price').value = comma(s.price);
+  calcMargin();
+  $('s_submit_btn').textContent = '수정 완료';
+  $('s_cancel_btn').style.display = 'inline-block';
+  const hint = $('s_hint');
+  hint.textContent = '판매 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
+  hint.classList.remove('ok');
+  renderSales();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelSalesEdit() {
+  sEditId = null; sEditPurchaseId = null;
+  resetSalesForm();
+  $('s_hint').textContent = '수정이 취소되었습니다.';
+  $('s_hint').classList.remove('ok');
+  renderSales();
+}
+
+function resetSalesForm() {
+  $('s_imei').value = '';
+  $('s_model').value = '';
+  $('s_cost').value = '';
+  $('s_color').value = '';
+  $('s_grade').value = '';
+  $('s_price').value = '';
+  $('s_margin').value = '';
+  $('s_date').value = todayStr();
+  $('s_submit_btn').textContent = '판매 등록';
+  $('s_cancel_btn').style.display = 'none';
+  sMatched = null;
+  refreshImeiList();
+}
+
+async function cancelSale(id) {
+  const s = sales.find(s => s.id === id);
+  if (!s) return;
+  if (!confirm(`[${s.model}]\n이 판매 건을 취소하시겠습니까?\n취소 시 해당 기기가 재고로 복원됩니다.`)) return;
+  if (sEditId === id) { sEditId = null; sEditPurchaseId = null; resetSalesForm(); }
+  const batch = db.batch();
+  batch.delete(scol().doc(id));
+  batch.update(pcol().doc(s.purchaseId), { status: '재고' });
+  await saveWrite(batch.commit());
+}
+
+/* ============ 월별현황 ============ */
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth(); // 0-indexed
+
+function monthlyShift(delta) {
+  viewMonth += delta;
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  renderMonthly();
+}
+function monthlyJump(value) {
+  if (!value) return;
+  const [y, m] = value.split('-').map(Number);
+  viewYear = y; viewMonth = m - 1;
+  renderMonthly();
+}
+function monthlyToday() {
+  const n = new Date();
+  viewYear = n.getFullYear(); viewMonth = n.getMonth();
+  renderMonthly();
+}
+function inViewMonth(dateStr) {
+  if (!dateStr) return false;
+  const [y, m] = dateStr.split('-').map(Number);
+  return y === viewYear && (m - 1) === viewMonth;
+}
+
+function renderMonthly() {
+  if (!document.getElementById('page-monthly').classList.contains('active')) {
+    // 탭이 안 보이면 라벨만 갱신해두고 무거운 렌더는 생략
+  }
+  $('m_month_label').textContent = `${viewYear}년 ${viewMonth + 1}월`;
+  $('m_month_input').value = viewYear + '-' + String(viewMonth + 1).padStart(2, '0');
+
+  const pIn = purchases.filter(p => inViewMonth(p.date));
+  const sIn = sales.filter(s => inViewMonth(s.date));
+
+  $('m_stat_pcount').textContent = pIn.length + '건';
+  $('m_stat_pcost').textContent = comma(pIn.reduce((sum, p) => sum + (Number(p.cost) || 0), 0)) + '원';
+  $('m_stat_scount').textContent = sIn.length + '건';
+  $('m_stat_margin').textContent = comma(sIn.reduce((sum, s) => sum + (Number(s.margin) || 0), 0)) + '원';
+
+  // 달력 머리글
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  $('m_calendar_head').innerHTML = days.map(d => `<div class="cal-head">${d}</div>`).join('');
+
+  // 달력 본체
+  const cal = $('m_calendar');
+  cal.innerHTML = '';
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const todayS = todayStr();
+  const buyByDay = {}, sellByDay = {};
+  pIn.forEach(p => { const d = Number(p.date.split('-')[2]); buyByDay[d] = (buyByDay[d] || 0) + 1; });
+  sIn.forEach(s => { const d = Number(s.date.split('-')[2]); sellByDay[d] = (sellByDay[d] || 0) + 1; });
+  let html = '';
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = viewYear + '-' + String(viewMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const isToday = dateStr === todayS;
+    let tags = '';
+    if (buyByDay[d]) tags += `<span class="cal-tag buy">매입 ${buyByDay[d]}</span>`;
+    if (sellByDay[d]) tags += `<span class="cal-tag sell">판매 ${sellByDay[d]}</span>`;
+    html += `<div class="cal-cell${isToday ? ' today' : ''}"><div class="daynum">${d}</div>${tags}</div>`;
+  }
+  cal.innerHTML = html;
+
+  // 이 달의 매입 내역
+  const pBody = $('m_purchase_table');
+  pBody.innerHTML = '';
+  if (pIn.length === 0) {
+    pBody.innerHTML = '<tr class="empty-row"><td colspan="8">이 달에 등록된 매입 내역이 없습니다.</td></tr>';
+  } else {
+    pIn.forEach((p, i) => {
+      const badge = p.status === '재고'
+        ? '<span class="badge badge-stock">재고</span>'
+        : '<span class="badge badge-sold">판매완료</span>';
+      pBody.innerHTML += `
+        <tr>
           <td>${i + 1}</td>
-          <td>${p.date}</td>
+          <td>${escapeHtml(p.date)}</td>
           <td style="text-align:left;">${escapeHtml(p.model)}</td>
           <td>${escapeHtml(p.imei)}</td>
           <td>${escapeHtml(p.color || '-')}</td>
-          <td>${gradeBadge(p.grade)}</td>
-          <td style="text-align:right;">${p.cost.toLocaleString()}</td>
-          <td style="text-align:left;">${escapeHtml(p.note || '-')}</td>
+          <td>${escapeHtml(p.grade)}</td>
+          <td style="text-align:right;">${comma(p.cost)}</td>
           <td>${badge}</td>
-          <td>${editBtn}${delBtn}</td>
-        `;
-        body.appendChild(tr);
-      });
-    }
-    updateStatusBar();
-    if (document.getElementById('page-monthly').classList.contains('active')) MonthlyModule.render();
-    if (typeof persistData === 'function') persistData();
-  }
-
-  function add(date, model, imei, color, grade, cost, note) {
-    const hint = document.getElementById('p_hint');
-    if (!model.trim() || !imei.trim()) {
-      hint.textContent = '모델명과 IMEI는 필수 입력 항목입니다.';
-      hint.classList.remove('ok');
-      return false;
-    }
-    if (purchases.some(p => p.imei === imei.trim())) {
-      hint.textContent = '이미 등록된 IMEI입니다.';
-      hint.classList.remove('ok');
-      return false;
-    }
-    purchases.push({
-      id: nextId++,
-      date: date || todayStr(),
-      model: model.trim(),
-      imei: imei.trim(),
-      color: color.trim(),
-      grade: grade,
-      cost: Number(cost) || 0,
-      note: note.trim(),
-      status: '재고'
+        </tr>`;
     });
-    hint.textContent = '매입이 등록되었습니다.';
-    hint.classList.add('ok');
-    render();
-    return true;
   }
 
-  function update(date, model, imei, color, grade, cost, note) {
-    const hint = document.getElementById('p_hint');
-    if (!editId) return false;
-    if (!model.trim() || !imei.trim()) {
-      hint.textContent = '모델명과 IMEI는 필수 입력 항목입니다.';
-      hint.classList.remove('ok');
-      return false;
-    }
-    if (purchases.some(p => p.imei === imei.trim() && p.id !== editId)) {
-      hint.textContent = '이미 등록된 IMEI입니다.';
-      hint.classList.remove('ok');
-      return false;
-    }
-    const target = purchases.find(p => p.id === editId);
-    if (!target) return false;
-    target.date = date || todayStr();
-    target.model = model.trim();
-    target.imei = imei.trim();
-    target.color = color.trim();
-    target.grade = grade;
-    target.cost = Number(cost) || 0;
-    target.note = note.trim();
-    editId = null;
-    hint.textContent = '매입 정보가 수정되었습니다.';
-    hint.classList.add('ok');
-    render();
-    return true;
-  }
-
-  function startEdit(id) {
-    const p = purchases.find(p => p.id === id);
-    if (!p) return null;
-    editId = id;
-    return p;
-  }
-
-  function cancelEdit() { editId = null; }
-  function getEditId() { return editId; }
-
-  function remove(id) {
-    const target = purchases.find(p => p.id === id);
-    if (!target) return;
-    if (target.status !== '재고') {
-      alert('판매완료된 항목은 매입 목록에서 바로 삭제할 수 없습니다.\n판매관리에서 해당 판매를 먼저 취소해주세요.');
-      return;
-    }
-    purchases = purchases.filter(p => p.id !== id);
-    render();
-  }
-
-  function findByImei(imei) {
-    return purchases.find(p => p.imei === imei.trim() && p.status === '재고');
-  }
-
-  function markSold(id) {
-    const p = purchases.find(p => p.id === id);
-    if (p) p.status = '판매완료';
-    render();
-  }
-
-  function markStock(id) {
-    const p = purchases.find(p => p.id === id);
-    if (p) p.status = '재고';
-    render();
-  }
-
-  function getStockList() { return purchases.filter(p => p.status === '재고'); }
-  function getAll() { return purchases; }
-
-  function loadData(arr) {
-    purchases = Array.isArray(arr) ? arr : [];
-    nextId = purchases.reduce((max, p) => Math.max(max, p.id), 0) + 1;
-  }
-
-  return { add, update, startEdit, cancelEdit, getEditId, remove, findByImei, markSold, markStock, getStockList, getAll, loadData, render };
-})();
-
-/* ============ 판매관리 (IIFE) ============ */
-const SalesModule = (function() {
-  let sales = []; // {id, purchaseId, date, model, imei, color, grade, cost, price, margin}
-  let nextId = 1;
-  let matchedPurchase = null;
-  let editBackup = null;
-
-  function render() {
-    const body = document.getElementById('s_table_body');
-    body.innerHTML = '';
-    if (sales.length === 0) {
-      body.innerHTML = '<tr class="empty-row"><td colspan="11">등록된 판매 내역이 없습니다.</td></tr>';
-    } else {
-      sales.forEach((s, i) => {
-        const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
-        const marginRate = s.price > 0 ? ((s.margin / s.price) * 100).toFixed(1) : '0.0';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+  // 이 달의 판매 내역
+  const sBody = $('m_sales_table');
+  sBody.innerHTML = '';
+  if (sIn.length === 0) {
+    sBody.innerHTML = '<tr class="empty-row"><td colspan="7">이 달에 등록된 판매 내역이 없습니다.</td></tr>';
+  } else {
+    sIn.forEach((s, i) => {
+      const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
+      sBody.innerHTML += `
+        <tr>
           <td>${i + 1}</td>
-          <td>${s.date}</td>
+          <td>${escapeHtml(s.date)}</td>
           <td style="text-align:left;">${escapeHtml(s.model)}</td>
           <td>${escapeHtml(s.imei)}</td>
-          <td>${escapeHtml(s.color || '-')}</td>
-          <td>${s.grade || '-'}</td>
-          <td style="text-align:right;">${s.cost.toLocaleString()}</td>
-          <td style="text-align:right;">${s.price.toLocaleString()}</td>
-          <td class="${marginClass}">${s.margin.toLocaleString()}</td>
-          <td class="${marginClass}">${marginRate}%</td>
-          <td><button class="btn-edit" onclick="editSaleRow(${s.id})">수정</button><button class="btn-del" onclick="SalesModule.cancel(${s.id})">취소</button></td>
-        `;
-        body.appendChild(tr);
-      });
-    }
-    updateStatusBar();
-    if (document.getElementById('page-monthly').classList.contains('active')) MonthlyModule.render();
-    if (typeof persistData === 'function') persistData();
-  }
-
-  function setMatched(p) { matchedPurchase = p; }
-  function getMatched() { return matchedPurchase; }
-
-  function add(date, price) {
-    const hint = document.getElementById('s_hint');
-    if (!matchedPurchase) {
-      hint.textContent = '재고에 있는 IMEI를 먼저 입력해주세요.';
-      hint.classList.remove('ok');
-      return false;
-    }
-    if (!price || Number(price) <= 0) {
-      hint.textContent = '판매가를 입력해주세요.';
-      hint.classList.remove('ok');
-      return false;
-    }
-    const p = matchedPurchase;
-    const priceNum = Number(price);
-    sales.push({
-      id: nextId++,
-      purchaseId: p.id,
-      date: date || todayStr(),
-      model: p.model,
-      imei: p.imei,
-      color: p.color,
-      grade: p.grade,
-      cost: p.cost,
-      price: priceNum,
-      margin: priceNum - p.cost
+          <td style="text-align:right;">${comma(s.cost)}</td>
+          <td style="text-align:right;">${comma(s.price)}</td>
+          <td class="${marginClass}">${comma(s.margin)}</td>
+        </tr>`;
     });
-    PurchaseModule.markSold(p.id);
-    hint.textContent = '판매가 등록되었습니다.';
-    hint.classList.add('ok');
-    render();
-    return true;
-  }
-
-  function cancel(id) {
-    const s = sales.find(s => s.id === id);
-    if (!s) return;
-    if (!confirm('이 판매 건을 취소하시겠습니까? 취소 시 해당 재고가 매입목록으로 복원됩니다.')) return;
-    PurchaseModule.markStock(s.purchaseId);
-    sales = sales.filter(s => s.id !== id);
-    render();
-  }
-
-  function startEdit(id) {
-    const s = sales.find(s => s.id === id);
-    if (!s) return null;
-    editBackup = { ...s };
-    PurchaseModule.markStock(s.purchaseId);
-    sales = sales.filter(x => x.id !== id);
-    render();
-    return editBackup;
-  }
-
-  function cancelEdit() {
-    if (!editBackup) return;
-    sales.push(editBackup);
-    PurchaseModule.markSold(editBackup.purchaseId);
-    editBackup = null;
-    render();
-  }
-
-  function clearEditState() { editBackup = null; }
-  function isEditing() { return editBackup !== null; }
-
-  function totalMargin() { return sales.reduce((sum, s) => sum + s.margin, 0); }
-  function getAll() { return sales; }
-
-  function loadData(arr) {
-    sales = Array.isArray(arr) ? arr : [];
-    nextId = sales.reduce((max, s) => Math.max(max, s.id), 0) + 1;
-  }
-
-  return { add, cancel, startEdit, cancelEdit, clearEditState, isEditing, setMatched, getMatched, totalMargin, getAll, loadData, render };
-})();
-
-/* ============ 월별현황 (IIFE) ============ */
-const MonthlyModule = (function() {
-  const now = new Date();
-  let viewYear = now.getFullYear();
-  let viewMonth = now.getMonth(); // 0-indexed
-
-  function shiftMonth(delta) {
-    viewMonth += delta;
-    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
-    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
-    render();
-  }
-
-  function jumpTo(value) {
-    if (!value) return;
-    const [y, m] = value.split('-').map(Number);
-    viewYear = y;
-    viewMonth = m - 1;
-    render();
-  }
-
-  function jumpToday() {
-    const n = new Date();
-    viewYear = n.getFullYear();
-    viewMonth = n.getMonth();
-    render();
-  }
-
-  function inMonth(dateStr) {
-    if (!dateStr) return false;
-    const [y, m] = dateStr.split('-').map(Number);
-    return y === viewYear && (m - 1) === viewMonth;
-  }
-
-  function renderCalendarHead() {
-    const head = document.getElementById('m_calendar_head');
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    head.innerHTML = days.map(d => `<div class="cal-head">${d}</div>`).join('');
-  }
-
-  function renderCalendar(purchasesInMonth, salesInMonth) {
-    const cal = document.getElementById('m_calendar');
-    cal.innerHTML = '';
-    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const todayS = todayStr();
-
-    const buyCountByDay = {};
-    const sellCountByDay = {};
-    purchasesInMonth.forEach(p => {
-      const d = Number(p.date.split('-')[2]);
-      buyCountByDay[d] = (buyCountByDay[d] || 0) + 1;
-    });
-    salesInMonth.forEach(s => {
-      const d = Number(s.date.split('-')[2]);
-      sellCountByDay[d] = (sellCountByDay[d] || 0) + 1;
-    });
-
-    for (let i = 0; i < firstDay; i++) {
-      cal.innerHTML += '<div class="cal-cell empty"></div>';
-    }
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = viewYear + '-' + String(viewMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-      const isToday = dateStr === todayS;
-      let tags = '';
-      if (buyCountByDay[d]) tags += `<span class="cal-tag buy">매입 ${buyCountByDay[d]}</span>`;
-      if (sellCountByDay[d]) tags += `<span class="cal-tag sell">판매 ${sellCountByDay[d]}</span>`;
-      cal.innerHTML += `<div class="cal-cell${isToday ? ' today' : ''}"><div class="daynum">${d}</div>${tags}</div>`;
-    }
-  }
-
-  function renderTables(purchasesInMonth, salesInMonth) {
-    const pBody = document.getElementById('m_purchase_table');
-    pBody.innerHTML = '';
-    if (purchasesInMonth.length === 0) {
-      pBody.innerHTML = '<tr class="empty-row"><td colspan="8">이 달에 등록된 매입 내역이 없습니다.</td></tr>';
-    } else {
-      purchasesInMonth.forEach((p, i) => {
-        const badge = p.status === '재고'
-          ? '<span class="badge badge-stock">재고</span>'
-          : '<span class="badge badge-sold">판매완료</span>';
-        pBody.innerHTML += `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${p.date}</td>
-            <td style="text-align:left;">${escapeHtml(p.model)}</td>
-            <td>${escapeHtml(p.imei)}</td>
-            <td>${escapeHtml(p.color || '-')}</td>
-            <td>${p.grade}</td>
-            <td style="text-align:right;">${p.cost.toLocaleString()}</td>
-            <td>${badge}</td>
-          </tr>`;
-      });
-    }
-
-    const sBody = document.getElementById('m_sales_table');
-    sBody.innerHTML = '';
-    if (salesInMonth.length === 0) {
-      sBody.innerHTML = '<tr class="empty-row"><td colspan="7">이 달에 등록된 판매 내역이 없습니다.</td></tr>';
-    } else {
-      salesInMonth.forEach((s, i) => {
-        const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
-        sBody.innerHTML += `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${s.date}</td>
-            <td style="text-align:left;">${escapeHtml(s.model)}</td>
-            <td>${escapeHtml(s.imei)}</td>
-            <td style="text-align:right;">${s.cost.toLocaleString()}</td>
-            <td style="text-align:right;">${s.price.toLocaleString()}</td>
-            <td class="${marginClass}">${s.margin.toLocaleString()}</td>
-          </tr>`;
-      });
-    }
-  }
-
-  function render() {
-    document.getElementById('m_month_label').textContent = `${viewYear}년 ${viewMonth + 1}월`;
-    document.getElementById('m_month_input').value = viewYear + '-' + String(viewMonth + 1).padStart(2, '0');
-
-    const purchasesInMonth = PurchaseModule.getAll().filter(p => inMonth(p.date));
-    const salesInMonth = SalesModule.getAll().filter(s => inMonth(s.date));
-
-    document.getElementById('m_stat_pcount').textContent = purchasesInMonth.length + '건';
-    document.getElementById('m_stat_pcost').textContent = purchasesInMonth.reduce((sum, p) => sum + p.cost, 0).toLocaleString() + '원';
-    document.getElementById('m_stat_scount').textContent = salesInMonth.length + '건';
-    document.getElementById('m_stat_margin').textContent = salesInMonth.reduce((sum, s) => sum + s.margin, 0).toLocaleString() + '원';
-
-    renderCalendarHead();
-    renderCalendar(purchasesInMonth, salesInMonth);
-    renderTables(purchasesInMonth, salesInMonth);
-  }
-
-  return { shiftMonth, jumpTo, jumpToday, render };
-})();
-
-/* ============ 파이어베이스 연동 저장소 (Store) ============ */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-  databaseURL: "https://aion2-55923-default-rtdb.firebaseio.com/"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const Store = (function() {
-  async function load(key) {
-    try {
-      const dbRef = ref(db);
-      const snapshot = await get(child(dbRef, key));
-      if (snapshot.exists()) {
-        return snapshot.val();
-      }
-      return null;
-    } catch (e) {
-      console.error("데이터 불러오기 실패:", e);
-      return null;
-    }
-  }
-
-  async function save(key, value) {
-    try {
-      const parsedValue = typeof value === 'string' ? JSON.parse(value) : value;
-      await set(ref(db, key), parsedValue);
-      return true;
-    } catch (e) {
-      console.error("데이터 저장 실패:", e);
-      return false;
-    }
-  }
-  return { load, save };
-})();
-
-let saveTimer = null;
-let dataLoaded = false;
-function persistData() {
-  if (!dataLoaded) return;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    const payload = {
-      purchases: PurchaseModule.getAll(),
-      sales: SalesModule.getAll()
-    };
-    const ok = await Store.save('inventory_data', payload);
-    const el = document.getElementById('save_status');
-    if (el) {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      el.textContent = ok ? `● 클라우드 저장됨 ${hh}:${mm}` : '● 저장 실패';
-      el.style.color = ok ? '#8FE3B3' : '#F4A3A3';
-    }
-  }, 300);
-}
-
-async function loadInitialData() {
-  const data = await Store.load('inventory_data');
-  if (data) {
-    try {
-      PurchaseModule.loadData(data.purchases || []);
-      SalesModule.loadData(data.sales || []);
-    } catch (e) {
-      console.error('데이터 파싱 실패', e);
-    }
   }
 }
 
-function exportBackup() {
-  const payload = {
-    purchases: PurchaseModule.getAll(),
-    sales: SalesModule.getAll(),
-    exportedAt: new Date().toISOString()
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+/* ============ 하단 상태바 ============ */
+function updateStatusBar() {
+  const stock = purchases.filter(p => p.status === '재고').length;
+  const sold = purchases.filter(p => p.status === '판매완료').length;
+  $('stat_total').textContent = purchases.length;
+  $('stat_stock').textContent = stock;
+  $('stat_sold').textContent = sold;
+  $('stat_margin').textContent = comma(sales.reduce((sum, s) => sum + (Number(s.margin) || 0), 0));
+}
+
+/* ============ 엑셀(CSV) 내려받기 ============ */
+function csvCell(v) {
+  const s = (v == null ? '' : String(v));
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function csvImei(v) {
+  // 엑셀에서 IMEI가 지수표기(1.23E+14)로 깨지는 것 방지
+  return '="' + String(v == null ? '' : v).replace(/"/g, '') + '"';
+}
+function exportCsv() {
+  const rows = [];
+  rows.push(['[매입 목록]']);
+  rows.push(['매입일', '모델명', 'IMEI', '색상', '등급', '매입가', '특이사항', '상태']);
+  purchases.forEach(p => rows.push([
+    csvCell(p.date), csvCell(p.model), csvImei(p.imei), csvCell(p.color),
+    csvCell(p.grade), p.cost, csvCell(p.note), csvCell(p.status)
+  ]));
+  rows.push([]);
+  rows.push(['[판매 목록]']);
+  rows.push(['판매일', '모델명', 'IMEI', '색상', '등급', '매입가', '판매가', '마진']);
+  sales.forEach(s => rows.push([
+    csvCell(s.date), csvCell(s.model), csvImei(s.imei), csvCell(s.color),
+    csvCell(s.grade), s.cost, s.price, s.margin
+  ]));
+  const csv = '\ufeff' + rows.map(r => r.join(',')).join('\r\n');
+  // (위 문자열 맨 앞은 한글 엑셀 호환을 위한 BOM)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const d = new Date();
-  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   a.href = url;
-  a.download = `aionio_backup_${stamp}.json`;
+  a.download = `aionio_재고관리_${stamp}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
-function handleImportFile(event) {
+/* ============ 예전 데이터 가져오기 ============ */
+// 이전 버전(로컬 저장 방식)의 백업 JSON 또는 브라우저에 남은 데이터를
+// 클라우드(Firestore)로 옮깁니다. IMEI가 같은 건은 건너뜁니다.
+async function importLegacyData(data, sourceLabel) {
+  const oldPurchases = Array.isArray(data.purchases) ? data.purchases : [];
+  const oldSales = Array.isArray(data.sales) ? data.sales : [];
+  if (oldPurchases.length === 0 && oldSales.length === 0) {
+    alert('가져올 데이터가 없습니다.');
+    return;
+  }
+  const existingImeis = new Set(purchases.map(p => String(p.imei)));
+  const idMap = {};
+  let pCount = 0, sCount = 0, skipped = 0;
+  const writes = [];
+  const stamp = firebase.firestore.FieldValue.serverTimestamp();
+
+  oldPurchases.forEach(op => {
+    const imei = String(op.imei == null ? '' : op.imei).trim();
+    if (!imei || existingImeis.has(imei)) { skipped++; return; }
+    existingImeis.add(imei);
+    const ref = pcol().doc();
+    idMap[op.id] = ref.id;
+    pCount++;
+    writes.push({ ref, data: {
+      date: op.date || todayStr(),
+      model: String(op.model || ''), imei,
+      color: String(op.color || ''), grade: op.grade || 'A',
+      cost: Number(op.cost) || 0, note: String(op.note || ''),
+      status: op.status === '판매완료' ? '판매완료' : '재고',
+      createdAt: stamp
+    }});
+  });
+  oldSales.forEach(os => {
+    const newPid = idMap[os.purchaseId];
+    if (!newPid) return; // 연결된 매입이 안 옮겨졌으면(중복 등) 판매도 건너뜀
+    const ref = scol().doc();
+    sCount++;
+    const cost = Number(os.cost) || 0, price = Number(os.price) || 0;
+    writes.push({ ref, data: {
+      purchaseId: newPid,
+      date: os.date || todayStr(),
+      model: String(os.model || ''), imei: String(os.imei || ''),
+      color: String(os.color || ''), grade: os.grade || '',
+      cost, price,
+      margin: (os.margin != null && !isNaN(Number(os.margin))) ? Number(os.margin) : price - cost,
+      createdAt: stamp
+    }});
+  });
+
+  if (writes.length === 0) {
+    alert('모든 데이터가 이미 등록되어 있어 가져올 항목이 없습니다.');
+    return;
+  }
+  setStatus('● 데이터 가져오는 중...', true);
+  try {
+    for (let i = 0; i < writes.length; i += 400) {
+      const batch = db.batch();
+      writes.slice(i, i + 400).forEach(w => batch.set(w.ref, w.data));
+      await batch.commit();
+    }
+    alert(`가져오기 완료! (${sourceLabel})\n\n매입 ${pCount}건, 판매 ${sCount}건을 옮겼습니다.` +
+      (skipped ? `\n이미 등록된 IMEI ${skipped}건은 건너뛰었습니다.` : ''));
+    setStatus('● 자동 저장됨 ' + nowHM(), true);
+  } catch (e) {
+    console.error(e);
+    setStatus('● 가져오기 실패', false);
+    alert('데이터 가져오기에 실패했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해주세요.\n\n(' + e.message + ')');
+  }
+}
+
+function handleLegacyFile(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (!confirm('백업 파일을 불러오면 현재 화면의 데이터를 덮어씁니다. 계속하시겠습니까?')) {
+      if (!confirm('예전 백업 파일의 데이터를 클라우드에 추가합니다.\n(같은 IMEI는 중복 등록되지 않습니다)\n계속하시겠습니까?')) {
         event.target.value = '';
         return;
       }
-      PurchaseModule.loadData(data.purchases || []);
-      SalesModule.loadData(data.sales || []);
-      dataLoaded = true;
-      PurchaseModule.render();
-      SalesModule.render();
-      MonthlyModule.render();
-      persistData();
-      alert('백업 데이터를 불러왔습니다.');
+      importLegacyData(data, '백업 파일');
     } catch (err) {
       alert('백업 파일을 읽을 수 없습니다. 올바른 백업(.json) 파일인지 확인해주세요.');
     }
@@ -1377,201 +1499,87 @@ function handleImportFile(event) {
   reader.readAsText(file);
 }
 
-/* ============ 공통 함수 ============ */
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+// 같은 주소(깃허브 페이지)에서 예전 버전을 쓰다가 새 버전으로 바꾼 경우,
+// 브라우저에 남아있는 데이터를 발견하면 한 번만 옮기기를 제안합니다.
+let legacyChecked = false;
+function maybeOfferLegacyImport() {
+  if (legacyChecked) return;
+  legacyChecked = true;
+  let raw = null;
+  try { raw = localStorage.getItem('inventory_data'); } catch (e) { return; }
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    const n = (data.purchases || []).length;
+    const m = (data.sales || []).length;
+    if (!n && !m) return;
+    if (confirm(`이 브라우저에 예전 버전 데이터가 남아 있습니다.\n(매입 ${n}건, 판매 ${m}건)\n\n클라우드로 옮길까요?\n(같은 IMEI는 중복 등록되지 않습니다)`)) {
+      importLegacyData(data, '이 브라우저의 예전 데이터');
+    }
+  } catch (e) { /* 무시 */ }
 }
 
-function submitPurchase() {
-  const date = document.getElementById('p_date').value;
-  const model = document.getElementById('p_model').value;
-  const imei = document.getElementById('p_imei').value;
-  const color = document.getElementById('p_color').value;
-  const grade = document.getElementById('p_grade').value;
-  const cost = document.getElementById('p_cost').value;
-  const note = document.getElementById('p_note').value;
-  const editing = PurchaseModule.getEditId();
-  const ok = editing
-    ? PurchaseModule.update(date, model, imei, color, grade, cost, note)
-    : PurchaseModule.add(date, model, imei, color, grade, cost, note);
-  if (ok) resetPurchaseForm();
+/* ============ 초기화 ============ */
+function showScreen(which) {
+  $('setup-screen').classList.toggle('show', which === 'setup');
+  $('login-screen').classList.toggle('show', which === 'login');
+  $('app').style.display = which === 'app' ? 'block' : 'none';
 }
 
-function editPurchaseRow(id) {
-  const p = PurchaseModule.startEdit(id);
-  if (!p) return;
-  document.getElementById('p_date').value = p.date;
-  document.getElementById('p_model').value = p.model;
-  document.getElementById('p_imei').value = p.imei;
-  document.getElementById('p_color').value = p.color;
-  document.getElementById('p_grade').value = p.grade;
-  document.getElementById('p_cost').value = p.cost;
-  document.getElementById('p_note').value = p.note;
-  document.getElementById('p_submit_btn').textContent = '수정 완료';
-  document.getElementById('p_cancel_btn').style.display = 'inline-block';
-  const hint = document.getElementById('p_hint');
-  hint.textContent = '매입 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
-  hint.classList.remove('ok');
-  document.getElementById('p_model').focus();
-}
+(function initApp() {
+  renderHeaderDate();
+  $('p_date').value = todayStr();
+  $('s_date').value = todayStr();
 
-function cancelPurchaseEdit() {
-  PurchaseModule.cancelEdit();
-  resetPurchaseForm();
-  document.getElementById('p_hint').textContent = '수정이 취소되었습니다.';
-}
+  // 어플처럼 설치·오프라인 실행되도록 서비스워커 등록 (웹 주소로 열었을 때만)
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    navigator.serviceWorker.register('./sw.js').catch(function () { /* 실패해도 앱 동작에는 지장 없음 */ });
+  }
 
-function resetPurchaseForm() {
-  document.getElementById('p_model').value = '';
-  document.getElementById('p_imei').value = '';
-  document.getElementById('p_color').value = '';
-  document.getElementById('p_grade').value = 'S';
-  document.getElementById('p_cost').value = '';
-  document.getElementById('p_note').value = '';
-  document.getElementById('p_date').value = todayStr();
-  document.getElementById('p_submit_btn').textContent = '매입 등록';
-  document.getElementById('p_cancel_btn').style.display = 'none';
-}
+  if (!isConfigured()) {
+    showScreen('setup');
+    return;
+  }
 
-function refreshImeiList() {
-  const datalist = document.getElementById('s_imei_list');
-  datalist.innerHTML = '';
-  PurchaseModule.getStockList().forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.imei;
-    opt.label = `${p.model} (매입가 ${p.cost.toLocaleString()}원)`;
-    datalist.appendChild(opt);
+  // 파이어베이스 SDK 자체가 로드되지 않은 경우 (인터넷 문제 등)
+  if (typeof firebase === 'undefined') {
+    showScreen('setup');
+    const card = document.querySelector('#setup-screen .login-card');
+    card.innerHTML = '<div class="login-accent"></div><div class="login-mark">a</div>' +
+      '<h1>서버 연결 실패</h1>' +
+      '<div class="login-sub">인터넷 연결을 확인한 뒤 새로고침(F5) 해주세요.</div>' +
+      '<div class="setup-note" style="margin-bottom:10px;">와이파이/데이터가 정상인데도 계속 이 화면이 보이면<br>잠시 후 다시 시도해주세요.</div>';
+    return;
+  }
+
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  } catch (e) {
+    showScreen('setup');
+    alert('파이어베이스 설정값이 올바르지 않습니다.\n설치가이드 6단계를 다시 확인해주세요.\n\n(' + e.message + ')');
+    return;
+  }
+  auth = firebase.auth();
+  db = firebase.firestore();
+  // 오프라인에서도 보고 입력할 수 있게 (연결되면 자동 동기화)
+  db.enablePersistence({ synchronizeTabs: true }).catch(function () { /* 미지원 브라우저는 무시 */ });
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      uid = user.uid;
+      showScreen('app');
+      setStatus('● 연결 중...', true);
+      startListeners();
+    } else {
+      uid = null;
+      stopListeners();
+      purchases = []; sales = [];
+      pEditId = null; sEditId = null; sEditPurchaseId = null; sMatched = null;
+      showScreen('login');
+      $('login_pw').value = '';
+      setTimeout(() => $('login_email').focus(), 100);
+    }
   });
-}
-
-function lookupImei() {
-  const imei = document.getElementById('s_imei').value;
-  const hint = document.getElementById('s_hint');
-  const modelField = document.getElementById('s_model');
-  const costField = document.getElementById('s_cost');
-  const colorField = document.getElementById('s_color');
-  const gradeField = document.getElementById('s_grade');
-
-  if (!imei.trim()) {
-    modelField.value = '';
-    costField.value = '';
-    colorField.value = '';
-    gradeField.value = '';
-    SalesModule.setMatched(null);
-    hint.textContent = '';
-    calcMargin();
-    return;
-  }
-
-  const found = PurchaseModule.findByImei(imei);
-  if (found) {
-    modelField.value = found.model;
-    costField.value = found.cost.toLocaleString() + ' 원';
-    colorField.value = found.color || '-';
-    gradeField.value = found.grade;
-    SalesModule.setMatched(found);
-    hint.textContent = `일치하는 매입 내역을 찾았습니다: ${found.model}`;
-    hint.classList.add('ok');
-  } else {
-    modelField.value = '';
-    costField.value = '';
-    colorField.value = '';
-    gradeField.value = '';
-    SalesModule.setMatched(null);
-    hint.textContent = '재고에서 일치하는 IMEI를 찾을 수 없습니다.';
-    hint.classList.remove('ok');
-  }
-  calcMargin();
-}
-
-function calcMargin() {
-  const matched = SalesModule.getMatched();
-  const priceField = document.getElementById('s_price');
-  const marginField = document.getElementById('s_margin');
-  if (!matched || !priceField.value) {
-    marginField.value = '';
-    return;
-  }
-  const margin = Number(priceField.value) - matched.cost;
-  marginField.value = margin.toLocaleString() + ' 원';
-}
-
-function submitSale() {
-  const date = document.getElementById('s_date').value;
-  const price = document.getElementById('s_price').value;
-  if (SalesModule.add(date, price)) {
-    SalesModule.clearEditState();
-    resetSalesForm();
-  }
-}
-
-function editSaleRow(id) {
-  const backup = SalesModule.startEdit(id);
-  if (!backup) return;
-  refreshImeiList();
-  document.getElementById('s_date').value = backup.date;
-  document.getElementById('s_imei').value = backup.imei;
-  lookupImei();
-  document.getElementById('s_price').value = backup.price;
-  calcMargin();
-  document.getElementById('s_submit_btn').textContent = '수정 완료';
-  document.getElementById('s_cancel_btn').style.display = 'inline-block';
-  const hint = document.getElementById('s_hint');
-  hint.textContent = '판매 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
-  hint.classList.remove('ok');
-}
-
-function cancelSalesEdit() {
-  SalesModule.cancelEdit();
-  resetSalesForm();
-  refreshImeiList();
-  document.getElementById('s_hint').textContent = '수정이 취소되었습니다.';
-}
-
-function resetSalesForm() {
-  document.getElementById('s_imei').value = '';
-  document.getElementById('s_model').value = '';
-  document.getElementById('s_cost').value = '';
-  document.getElementById('s_color').value = '';
-  document.getElementById('s_grade').value = '';
-  document.getElementById('s_price').value = '';
-  document.getElementById('s_margin').value = '';
-  document.getElementById('s_date').value = todayStr();
-  document.getElementById('s_submit_btn').textContent = '판매 등록';
-  document.getElementById('s_cancel_btn').style.display = 'none';
-  SalesModule.setMatched(null);
-  refreshImeiList();
-  document.getElementById('s_imei').focus();
-}
-
-function updateStatusBar() {
-  const all = PurchaseModule.getAll();
-  const stock = all.filter(p => p.status === '재고').length;
-  const sold = all.filter(p => p.status === '판매완료').length;
-  document.getElementById('stat_total').textContent = all.length;
-  document.getElementById('stat_stock').textContent = stock;
-  document.getElementById('stat_sold').textContent = sold;
-  document.getElementById('stat_margin').textContent = SalesModule.totalMargin().toLocaleString();
-}
-
-/* 초기화 */
-document.getElementById('p_date').value = todayStr();
-document.getElementById('s_date').value = todayStr();
-PurchaseModule.render();
-SalesModule.render();
-MonthlyModule.render();
-
-(async function initApp() {
-  const el = document.getElementById('save_status');
-  if (el) el.textContent = '● 클라우드 연결 중...';
-  await loadInitialData();
-  dataLoaded = true;
-  PurchaseModule.render();
-  SalesModule.render();
-  MonthlyModule.render();
-  if (el) el.textContent = '● 클라우드 동기화 완료';
 })();
 </script>
 </body>

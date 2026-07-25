@@ -1,0 +1,17 @@
+{
+  "name": "aionio 중고폰 재고관리",
+  "short_name": "aionio",
+  "description": "중고폰 매입·판매·재고를 어디서나 관리",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#161E33",
+  "theme_color": "#1F2A44",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
