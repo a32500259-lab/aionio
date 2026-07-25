@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>aion</title>
+<title>aion2</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
   :root {
@@ -78,6 +78,7 @@
   }
   .header-right { display: flex; align-items: center; gap: 14px; }
   .header-date { font-size: 12px; color: #B7C2E3; font-weight: 500; }
+  .save-status { font-size: 11.5px; color: #8FE3B3; font-weight: 700; white-space: nowrap; }
   .logout-btn {
     background: rgba(255,255,255,0.08);
     color: #E7EAF3;
@@ -119,6 +120,17 @@
   }
   .tab.active { background: var(--accent); color: #fff; }
   .tab:hover:not(.active) { background: var(--accent-light); color: var(--accent-dark); }
+
+  .tab-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0 20px 0;
+  }
+  .tab-toolbar .tabstrip { margin: 0; }
+  .data-tools { display: flex; gap: 8px; flex-wrap: wrap; }
 
   .page { display: none; }
   .page.active { display: block; }
@@ -543,16 +555,24 @@
     </div>
   </div>
   <div class="header-right">
+    <div class="save-status" id="save_status">● 대기 중</div>
     <div class="header-date" id="header_date"></div>
     <button class="logout-btn" onclick="doLogout()">로그아웃</button>
   </div>
 </div>
 
 <div class="container">
-<div class="tabstrip">
-  <div class="tab active" data-tab="purchase" onclick="switchTab('purchase')">매입관리</div>
-  <div class="tab" data-tab="sales" onclick="switchTab('sales')">판매관리</div>
-  <div class="tab" data-tab="monthly" onclick="switchTab('monthly')">월별현황</div>
+<div class="tab-toolbar">
+  <div class="tabstrip">
+    <div class="tab active" data-tab="purchase" onclick="switchTab('purchase')">매입관리</div>
+    <div class="tab" data-tab="sales" onclick="switchTab('sales')">판매관리</div>
+    <div class="tab" data-tab="monthly" onclick="switchTab('monthly')">월별현황</div>
+  </div>
+  <div class="data-tools">
+    <button class="btn-nav" onclick="exportBackup()">⬇ 백업 저장</button>
+    <button class="btn-nav" onclick="document.getElementById('import_file').click()">⬆ 백업 불러오기</button>
+    <input type="file" id="import_file" accept="application/json" style="display:none" onchange="handleImportFile(event)">
+  </div>
 </div>
 
 <!-- ================= 매입관리 ================= -->
@@ -878,6 +898,7 @@ const PurchaseModule = (function() {
     }
     updateStatusBar();
     if (document.getElementById('page-monthly').classList.contains('active')) MonthlyModule.render();
+    if (typeof persistData === 'function') persistData();
   }
 
   function add(date, model, imei, color, grade, cost, note) {
@@ -978,7 +999,12 @@ const PurchaseModule = (function() {
   function getStockList() { return purchases.filter(p => p.status === '재고'); }
   function getAll() { return purchases; }
 
-  return { add, update, startEdit, cancelEdit, getEditId, remove, findByImei, markSold, markStock, getStockList, getAll, render };
+  function loadData(arr) {
+    purchases = Array.isArray(arr) ? arr : [];
+    nextId = purchases.reduce((max, p) => Math.max(max, p.id), 0) + 1;
+  }
+
+  return { add, update, startEdit, cancelEdit, getEditId, remove, findByImei, markSold, markStock, getStockList, getAll, loadData, render };
 })();
 
 /* ============ 판매관리 (IIFE) ============ */
@@ -1016,6 +1042,7 @@ const SalesModule = (function() {
     }
     updateStatusBar();
     if (document.getElementById('page-monthly').classList.contains('active')) MonthlyModule.render();
+    if (typeof persistData === 'function') persistData();
   }
 
   function setMatched(p) { matchedPurchase = p; }
@@ -1087,7 +1114,12 @@ const SalesModule = (function() {
   function totalMargin() { return sales.reduce((sum, s) => sum + s.margin, 0); }
   function getAll() { return sales; }
 
-  return { add, cancel, startEdit, cancelEdit, clearEditState, isEditing, setMatched, getMatched, totalMargin, getAll, render };
+  function loadData(arr) {
+    sales = Array.isArray(arr) ? arr : [];
+    nextId = sales.reduce((max, s) => Math.max(max, s.id), 0) + 1;
+  }
+
+  return { add, cancel, startEdit, cancelEdit, clearEditState, isEditing, setMatched, getMatched, totalMargin, getAll, loadData, render };
 })();
 
 /* ============ 월별현황 (IIFE) ============ */
@@ -1225,6 +1257,112 @@ const MonthlyModule = (function() {
 
   return { shiftMonth, jumpTo, jumpToday, render };
 })();
+
+/* ============ 저장소 (Store) ============ */
+const Store = (function() {
+  function hasCloud() {
+    return (typeof window !== 'undefined') && !!window.storage;
+  }
+  async function load(key) {
+    if (hasCloud()) {
+      try {
+        const r = await window.storage.get(key, false);
+        return r ? r.value : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  async function save(key, value) {
+    if (hasCloud()) {
+      try { await window.storage.set(key, value, false); return true; }
+      catch (e) { /* fall through to local fallback */ }
+    }
+    try { localStorage.setItem(key, value); return true; } catch (e) { return false; }
+  }
+  return { load, save };
+})();
+
+let saveTimer = null;
+let dataLoaded = false;
+function persistData() {
+  if (!dataLoaded) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const payload = JSON.stringify({
+      purchases: PurchaseModule.getAll(),
+      sales: SalesModule.getAll()
+    });
+    const ok = await Store.save('inventory_data', payload);
+    const el = document.getElementById('save_status');
+    if (el) {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      el.textContent = ok ? `● 저장됨 ${hh}:${mm}` : '● 저장 실패';
+      el.style.color = ok ? '#8FE3B3' : '#F4A3A3';
+    }
+  }, 300);
+}
+
+async function loadInitialData() {
+  const raw = await Store.load('inventory_data');
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      PurchaseModule.loadData(data.purchases || []);
+      SalesModule.loadData(data.sales || []);
+    } catch (e) {
+      console.error('저장된 데이터를 불러오지 못했습니다.', e);
+    }
+  }
+}
+
+function exportBackup() {
+  const payload = {
+    purchases: PurchaseModule.getAll(),
+    sales: SalesModule.getAll(),
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+  a.href = url;
+  a.download = `aionio_backup_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!confirm('백업 파일을 불러오면 현재 화면의 데이터를 덮어씁니다. 계속하시겠습니까?')) {
+        event.target.value = '';
+        return;
+      }
+      PurchaseModule.loadData(data.purchases || []);
+      SalesModule.loadData(data.sales || []);
+      dataLoaded = true;
+      PurchaseModule.render();
+      SalesModule.render();
+      MonthlyModule.render();
+      alert('백업 데이터를 불러왔습니다.');
+    } catch (err) {
+      alert('백업 파일을 읽을 수 없습니다. 올바른 백업(.json) 파일인지 확인해주세요.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
 
 /* ============ 공통 함수 ============ */
 function escapeHtml(str) {
@@ -1411,6 +1549,17 @@ document.getElementById('s_date').value = todayStr();
 PurchaseModule.render();
 SalesModule.render();
 MonthlyModule.render();
+
+(async function initApp() {
+  const el = document.getElementById('save_status');
+  if (el) el.textContent = '● 데이터 불러오는 중...';
+  await loadInitialData();
+  dataLoaded = true;
+  PurchaseModule.render();
+  SalesModule.render();
+  MonthlyModule.render();
+  if (el) el.textContent = '● 저장된 데이터 불러옴';
+})();
 </script>
 </body>
 </html>
