@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>아이온2</title>
+<title>aion</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <style>
   :root {
@@ -227,6 +227,33 @@
     transition: background 0.15s, color 0.15s;
   }
   .btn-del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .btn-edit {
+    background: var(--surface);
+    color: var(--accent-dark);
+    border: 1px solid #C7D3F7;
+    padding: 5px 12px;
+    font-size: 11.5px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+    margin-right: 4px;
+  }
+  .btn-edit:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text-mute);
+    border: 1px solid var(--border);
+    padding: 9px 18px;
+    font-size: 13.5px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: inherit;
+    height: 38px;
+  }
+  .btn-ghost:hover { background: #F1F2F6; }
 
   .hint { font-size: 12px; color: var(--danger); margin-top: 10px; min-height: 15px; font-weight: 600; }
   .hint.ok { color: var(--success); }
@@ -254,6 +281,7 @@
     color: var(--text);
   }
   tbody tr:hover td { background: var(--accent-light); }
+  tbody tr.editing-row td { background: var(--amber-light) !important; }
   .empty-row td { padding: 30px; color: var(--text-faint); font-style: normal; font-weight: 500; }
 
   .badge {
@@ -566,7 +594,8 @@
           <label>특이사항</label>
           <input type="text" id="p_note" placeholder="예: 액정 미세스크래치, 배터리 92%">
         </div>
-        <button class="btn btn-main" onclick="addPurchase()">매입 등록</button>
+        <button class="btn btn-main" id="p_submit_btn" onclick="submitPurchase()">매입 등록</button>
+        <button class="btn-ghost" id="p_cancel_btn" style="display:none;" onclick="cancelPurchaseEdit()">취소</button>
       </div>
       <div class="hint" id="p_hint"></div>
     </div>
@@ -587,7 +616,7 @@
             <th style="width:100px;">매입가</th>
             <th>특이사항</th>
             <th style="width:80px;">상태</th>
-            <th style="width:60px;">삭제</th>
+            <th style="width:120px;">관리</th>
           </tr>
         </thead>
         <tbody id="p_table_body"></tbody>
@@ -635,7 +664,8 @@
           <label>마진</label>
           <input type="text" id="s_margin" readonly placeholder="0">
         </div>
-        <button class="btn btn-main" onclick="addSale()">판매 등록</button>
+        <button class="btn btn-main" id="s_submit_btn" onclick="submitSale()">판매 등록</button>
+        <button class="btn-ghost" id="s_cancel_btn" style="display:none;" onclick="cancelSalesEdit()">취소</button>
       </div>
       <div class="hint" id="s_hint"></div>
     </div>
@@ -657,7 +687,7 @@
             <th style="width:95px;">판매가</th>
             <th style="width:85px;">마진</th>
             <th style="width:65px;">마진율</th>
-            <th style="width:60px;">취소</th>
+            <th style="width:120px;">관리</th>
           </tr>
         </thead>
         <tbody id="s_table_body"></tbody>
@@ -809,6 +839,7 @@ function switchTab(name) {
 const PurchaseModule = (function() {
   let purchases = []; // {id, date, model, imei, color, grade, cost, note, status}
   let nextId = 1;
+  let editId = null;
 
   function gradeBadge(g) {
     return `<span class="badge badge-grade-${g}">${g}</span>`;
@@ -822,12 +853,14 @@ const PurchaseModule = (function() {
     } else {
       purchases.forEach((p, i) => {
         const tr = document.createElement('tr');
+        if (p.id === editId) tr.classList.add('editing-row');
         const badge = p.status === '재고'
           ? '<span class="badge badge-stock">재고</span>'
           : '<span class="badge badge-sold">판매완료</span>';
         const delBtn = p.status === '재고'
           ? `<button class="btn-del" onclick="PurchaseModule.remove(${p.id})">삭제</button>`
           : '-';
+        const editBtn = `<button class="btn-edit" onclick="editPurchaseRow(${p.id})">수정</button>`;
         tr.innerHTML = `
           <td>${i + 1}</td>
           <td>${p.date}</td>
@@ -838,7 +871,7 @@ const PurchaseModule = (function() {
           <td style="text-align:right;">${p.cost.toLocaleString()}</td>
           <td style="text-align:left;">${escapeHtml(p.note || '-')}</td>
           <td>${badge}</td>
-          <td>${delBtn}</td>
+          <td>${editBtn}${delBtn}</td>
         `;
         body.appendChild(tr);
       });
@@ -876,6 +909,45 @@ const PurchaseModule = (function() {
     return true;
   }
 
+  function update(date, model, imei, color, grade, cost, note) {
+    const hint = document.getElementById('p_hint');
+    if (!editId) return false;
+    if (!model.trim() || !imei.trim()) {
+      hint.textContent = '모델명과 IMEI는 필수 입력 항목입니다.';
+      hint.classList.remove('ok');
+      return false;
+    }
+    if (purchases.some(p => p.imei === imei.trim() && p.id !== editId)) {
+      hint.textContent = '이미 등록된 IMEI입니다.';
+      hint.classList.remove('ok');
+      return false;
+    }
+    const target = purchases.find(p => p.id === editId);
+    if (!target) return false;
+    target.date = date || todayStr();
+    target.model = model.trim();
+    target.imei = imei.trim();
+    target.color = color.trim();
+    target.grade = grade;
+    target.cost = Number(cost) || 0;
+    target.note = note.trim();
+    editId = null;
+    hint.textContent = '매입 정보가 수정되었습니다.';
+    hint.classList.add('ok');
+    render();
+    return true;
+  }
+
+  function startEdit(id) {
+    const p = purchases.find(p => p.id === id);
+    if (!p) return null;
+    editId = id;
+    return p;
+  }
+
+  function cancelEdit() { editId = null; }
+  function getEditId() { return editId; }
+
   function remove(id) {
     const target = purchases.find(p => p.id === id);
     if (!target) return;
@@ -906,7 +978,7 @@ const PurchaseModule = (function() {
   function getStockList() { return purchases.filter(p => p.status === '재고'); }
   function getAll() { return purchases; }
 
-  return { add, remove, findByImei, markSold, markStock, getStockList, getAll, render };
+  return { add, update, startEdit, cancelEdit, getEditId, remove, findByImei, markSold, markStock, getStockList, getAll, render };
 })();
 
 /* ============ 판매관리 (IIFE) ============ */
@@ -914,6 +986,7 @@ const SalesModule = (function() {
   let sales = []; // {id, purchaseId, date, model, imei, color, grade, cost, price, margin}
   let nextId = 1;
   let matchedPurchase = null;
+  let editBackup = null;
 
   function render() {
     const body = document.getElementById('s_table_body');
@@ -936,7 +1009,7 @@ const SalesModule = (function() {
           <td style="text-align:right;">${s.price.toLocaleString()}</td>
           <td class="${marginClass}">${s.margin.toLocaleString()}</td>
           <td class="${marginClass}">${marginRate}%</td>
-          <td><button class="btn-del" onclick="SalesModule.cancel(${s.id})">취소</button></td>
+          <td><button class="btn-edit" onclick="editSaleRow(${s.id})">수정</button><button class="btn-del" onclick="SalesModule.cancel(${s.id})">취소</button></td>
         `;
         body.appendChild(tr);
       });
@@ -990,10 +1063,31 @@ const SalesModule = (function() {
     render();
   }
 
+  function startEdit(id) {
+    const s = sales.find(s => s.id === id);
+    if (!s) return null;
+    editBackup = { ...s };
+    PurchaseModule.markStock(s.purchaseId);
+    sales = sales.filter(x => x.id !== id);
+    render();
+    return editBackup;
+  }
+
+  function cancelEdit() {
+    if (!editBackup) return;
+    sales.push(editBackup);
+    PurchaseModule.markSold(editBackup.purchaseId);
+    editBackup = null;
+    render();
+  }
+
+  function clearEditState() { editBackup = null; }
+  function isEditing() { return editBackup !== null; }
+
   function totalMargin() { return sales.reduce((sum, s) => sum + s.margin, 0); }
   function getAll() { return sales; }
 
-  return { add, cancel, setMatched, getMatched, totalMargin, getAll, render };
+  return { add, cancel, startEdit, cancelEdit, clearEditState, isEditing, setMatched, getMatched, totalMargin, getAll, render };
 })();
 
 /* ============ 월별현황 (IIFE) ============ */
@@ -1139,7 +1233,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function addPurchase() {
+function submitPurchase() {
   const date = document.getElementById('p_date').value;
   const model = document.getElementById('p_model').value;
   const imei = document.getElementById('p_imei').value;
@@ -1147,16 +1241,47 @@ function addPurchase() {
   const grade = document.getElementById('p_grade').value;
   const cost = document.getElementById('p_cost').value;
   const note = document.getElementById('p_note').value;
-  if (PurchaseModule.add(date, model, imei, color, grade, cost, note)) {
-    document.getElementById('p_model').value = '';
-    document.getElementById('p_imei').value = '';
-    document.getElementById('p_color').value = '';
-    document.getElementById('p_grade').value = 'S';
-    document.getElementById('p_cost').value = '';
-    document.getElementById('p_note').value = '';
-    document.getElementById('p_date').value = todayStr();
-    document.getElementById('p_model').focus();
-  }
+  const editing = PurchaseModule.getEditId();
+  const ok = editing
+    ? PurchaseModule.update(date, model, imei, color, grade, cost, note)
+    : PurchaseModule.add(date, model, imei, color, grade, cost, note);
+  if (ok) resetPurchaseForm();
+}
+
+function editPurchaseRow(id) {
+  const p = PurchaseModule.startEdit(id);
+  if (!p) return;
+  document.getElementById('p_date').value = p.date;
+  document.getElementById('p_model').value = p.model;
+  document.getElementById('p_imei').value = p.imei;
+  document.getElementById('p_color').value = p.color;
+  document.getElementById('p_grade').value = p.grade;
+  document.getElementById('p_cost').value = p.cost;
+  document.getElementById('p_note').value = p.note;
+  document.getElementById('p_submit_btn').textContent = '수정 완료';
+  document.getElementById('p_cancel_btn').style.display = 'inline-block';
+  const hint = document.getElementById('p_hint');
+  hint.textContent = '매입 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
+  hint.classList.remove('ok');
+  document.getElementById('p_model').focus();
+}
+
+function cancelPurchaseEdit() {
+  PurchaseModule.cancelEdit();
+  resetPurchaseForm();
+  document.getElementById('p_hint').textContent = '수정이 취소되었습니다.';
+}
+
+function resetPurchaseForm() {
+  document.getElementById('p_model').value = '';
+  document.getElementById('p_imei').value = '';
+  document.getElementById('p_color').value = '';
+  document.getElementById('p_grade').value = 'S';
+  document.getElementById('p_cost').value = '';
+  document.getElementById('p_note').value = '';
+  document.getElementById('p_date').value = todayStr();
+  document.getElementById('p_submit_btn').textContent = '매입 등록';
+  document.getElementById('p_cancel_btn').style.display = 'none';
 }
 
 function refreshImeiList() {
@@ -1222,22 +1347,52 @@ function calcMargin() {
   marginField.value = margin.toLocaleString() + ' 원';
 }
 
-function addSale() {
+function submitSale() {
   const date = document.getElementById('s_date').value;
   const price = document.getElementById('s_price').value;
   if (SalesModule.add(date, price)) {
-    document.getElementById('s_imei').value = '';
-    document.getElementById('s_model').value = '';
-    document.getElementById('s_cost').value = '';
-    document.getElementById('s_color').value = '';
-    document.getElementById('s_grade').value = '';
-    document.getElementById('s_price').value = '';
-    document.getElementById('s_margin').value = '';
-    document.getElementById('s_date').value = todayStr();
-    SalesModule.setMatched(null);
-    refreshImeiList();
-    document.getElementById('s_imei').focus();
+    SalesModule.clearEditState();
+    resetSalesForm();
   }
+}
+
+function editSaleRow(id) {
+  const backup = SalesModule.startEdit(id);
+  if (!backup) return;
+  refreshImeiList();
+  document.getElementById('s_date').value = backup.date;
+  document.getElementById('s_imei').value = backup.imei;
+  lookupImei();
+  document.getElementById('s_price').value = backup.price;
+  calcMargin();
+  document.getElementById('s_submit_btn').textContent = '수정 완료';
+  document.getElementById('s_cancel_btn').style.display = 'inline-block';
+  const hint = document.getElementById('s_hint');
+  hint.textContent = '판매 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
+  hint.classList.remove('ok');
+}
+
+function cancelSalesEdit() {
+  SalesModule.cancelEdit();
+  resetSalesForm();
+  refreshImeiList();
+  document.getElementById('s_hint').textContent = '수정이 취소되었습니다.';
+}
+
+function resetSalesForm() {
+  document.getElementById('s_imei').value = '';
+  document.getElementById('s_model').value = '';
+  document.getElementById('s_cost').value = '';
+  document.getElementById('s_color').value = '';
+  document.getElementById('s_grade').value = '';
+  document.getElementById('s_price').value = '';
+  document.getElementById('s_margin').value = '';
+  document.getElementById('s_date').value = todayStr();
+  document.getElementById('s_submit_btn').textContent = '판매 등록';
+  document.getElementById('s_cancel_btn').style.display = 'none';
+  SalesModule.setMatched(null);
+  refreshImeiList();
+  document.getElementById('s_imei').focus();
 }
 
 function updateStatusBar() {
