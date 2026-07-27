@@ -787,6 +787,7 @@ let sEditId = null, sEditPurchaseId = null; // 수정 중인 판매 문서 id / 
 let sMatched = null;                      // 판매 등록 폼에서 IMEI로 찾은 매입 건
 let pFilter = '', sFilter = '';
 let busy = false;                         // 중복 저장 방지
+let sessionTouchTimer = null;             // 자동 로그아웃(5분) 체크용 타이머
 
 function isConfigured() {
   return FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('여기에') === -1;
@@ -832,6 +833,22 @@ const AUTH_ERROR_MSG = {
   'auth/too-many-requests': '시도가 너무 많았습니다. 잠시 후 다시 시도해주세요.',
   'auth/network-request-failed': '인터넷 연결을 확인해주세요.'
 };
+
+/* ============ 자동 로그아웃 (창을 닫고 5분 넘게 지나면 로그아웃) ============ */
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5분
+function touchSession() {
+  try { localStorage.setItem('aionio_last_active', String(Date.now())); } catch (e) { /* 무시 */ }
+}
+function clearSessionTimestamp() {
+  try { localStorage.removeItem('aionio_last_active'); } catch (e) { /* 무시 */ }
+}
+function isSessionExpired() {
+  try {
+    const last = Number(localStorage.getItem('aionio_last_active'));
+    if (!last) return false; // 기록이 없으면(예: 최초 로그인) 만료로 보지 않음
+    return (Date.now() - last) > SESSION_TIMEOUT_MS;
+  } catch (e) { return false; }
+}
 
 async function doLogin() {
   const email = $('login_email').value.trim();
@@ -1607,13 +1624,24 @@ function showScreen(which) {
 
   auth.onAuthStateChanged(user => {
     if (user) {
+      // 창을 닫아둔 지 5분이 넘었으면 자동 로그아웃 (신호는 아래 else 분기에서 처리됨)
+      if (isSessionExpired()) {
+        clearSessionTimestamp();
+        auth.signOut();
+        return;
+      }
       uid = user.uid;
       showScreen('app');
       setStatus('● 연결 중...', true);
       startListeners();
+      touchSession();
+      if (sessionTouchTimer) clearInterval(sessionTouchTimer);
+      sessionTouchTimer = setInterval(touchSession, 20000); // 앱이 열려있는 동안 계속 "활동 중"으로 갱신
     } else {
       uid = null;
       stopListeners();
+      if (sessionTouchTimer) { clearInterval(sessionTouchTimer); sessionTouchTimer = null; }
+      clearSessionTimestamp();
       purchases = []; sales = [];
       pEditId = null; sEditId = null; sEditPurchaseId = null; sMatched = null;
       showScreen('login');
