@@ -399,6 +399,26 @@
     .field.narrow, .field.xnarrow { flex: 1 1 46%; }
   }
 </style>
+<style>
+  /* ===== 월별 목록 필터 (추가) ===== */
+  .month-filter-row {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 0 20px 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .month-filter-btn {
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-mute); border-radius: 999px;
+    padding: 5px 13px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .month-filter-btn:hover { background: var(--accent-light); color: var(--accent-dark); border-color: var(--accent); }
+  .month-filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  @media (max-width: 540px) {
+    .month-filter-row { padding: 0 16px 12px 16px; }
+  }
+</style>
 </head>
 <body>
 
@@ -533,6 +553,7 @@
     <div class="panel-title">매입 목록
       <input class="panel-search" id="p_search" placeholder="모델명·IMEI 검색" oninput="setPurchaseFilter(this.value)">
     </div>
+    <div class="month-filter-row" id="p_month_filter"></div>
     <div class="panel-body" style="padding:0;">
       <div class="table-wrap"><table>
         <thead>
@@ -609,6 +630,7 @@
     <div class="panel-title">판매 목록
       <input class="panel-search" id="s_search" placeholder="모델명·IMEI 검색" oninput="setSalesFilter(this.value)">
     </div>
+    <div class="month-filter-row" id="s_month_filter"></div>
     <div class="panel-body" style="padding:0;">
       <div class="table-wrap"><table>
         <thead>
@@ -1650,6 +1672,122 @@ function showScreen(which) {
     }
   });
 })();
+</script>
+
+<!-- ============================================================
+     ▼ 추가 기능: 매입/판매 목록 월별 필터 (기존 코드는 건드리지 않음) ▼
+     아래는 새로 추가된 스크립트입니다. 기존 renderPurchases / renderSales
+     함수는 위에 그대로 남아있고, 자바스크립트에서는 같은 이름의 함수가
+     나중에 다시 선언되면 나중 것이 적용되는 원리를 이용해
+     "월 필터가 적용된 버전"으로 덮어씁니다.
+============================================================ -->
+<script>
+  /* 월 필터 상태 ('ALL' = 전체) */
+  let pMonthFilter = 'ALL';
+  let sMonthFilter = 'ALL';
+
+  function getMonthKey(dateStr) {
+    return dateStr ? String(dateStr).slice(0, 7) : ''; // 'YYYY-MM'
+  }
+  function monthKeyLabel(key) {
+    const parts = key.split('-');
+    const y = parts[0], m = Number(parts[1]);
+    return y + '년 ' + m + '월';
+  }
+  function setPurchaseMonthFilter(key) { pMonthFilter = key; renderPurchases(); }
+  function setSalesMonthFilter(key) { sMonthFilter = key; renderSales(); }
+
+  function renderMonthFilterButtons(containerId, dataArr, currentFilter, handlerName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const months = Array.from(new Set(dataArr.map(item => getMonthKey(item.date)).filter(Boolean))).sort();
+    let html = '<button type="button" class="month-filter-btn' + (currentFilter === 'ALL' ? ' active' : '') +
+      '" onclick="' + handlerName + '(\'ALL\')">전체</button>';
+    months.forEach(function (m) {
+      html += '<button type="button" class="month-filter-btn' + (currentFilter === m ? ' active' : '') +
+        '" onclick="' + handlerName + '(\'' + m + '\')">' + monthKeyLabel(m) + '</button>';
+    });
+    container.innerHTML = html;
+  }
+
+  /* 매입 목록 렌더링 — 검색 필터 + 월 필터를 함께 적용 (기존 renderPurchases 를 대체) */
+  function renderPurchases() {
+    renderMonthFilterButtons('p_month_filter', purchases, pMonthFilter, 'setPurchaseMonthFilter');
+    const body = $('p_table_body');
+    body.innerHTML = '';
+    const list = purchases.filter(function (p) {
+      return matchesFilter(p, pFilter) && (pMonthFilter === 'ALL' || getMonthKey(p.date) === pMonthFilter);
+    });
+    if (list.length === 0) {
+      const msg = purchases.length === 0 ? '등록된 매입 내역이 없습니다.' : '해당 조건의 매입 내역이 없습니다.';
+      body.innerHTML = '<tr class="empty-row"><td colspan="10">' + msg + '</td></tr>';
+    } else {
+      list.forEach(function (p, i) {
+        const tr = document.createElement('tr');
+        if (p.id === pEditId) tr.classList.add('editing-row');
+        const badge = p.status === '재고'
+          ? '<span class="badge badge-stock">재고</span>'
+          : '<span class="badge badge-sold">판매완료</span>';
+        const delBtn = p.status === '재고'
+          ? '<button class="btn-del" onclick="removePurchase(\'' + p.id + '\')">삭제</button>'
+          : '-';
+        tr.innerHTML =
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escapeHtml(p.date) + '</td>' +
+          '<td style="text-align:left;">' + escapeHtml(p.model) + '</td>' +
+          '<td>' + escapeHtml(p.imei) + '</td>' +
+          '<td>' + escapeHtml(p.color || '-') + '</td>' +
+          '<td>' + gradeBadge(p.grade) + '</td>' +
+          '<td style="text-align:right;">' + comma(p.cost) + '</td>' +
+          '<td style="text-align:left;">' + escapeHtml(p.note || '-') + '</td>' +
+          '<td>' + badge + '</td>' +
+          '<td><button class="btn-edit" onclick="editPurchaseRow(\'' + p.id + '\')">수정</button>' + delBtn + '</td>';
+        body.appendChild(tr);
+      });
+    }
+    updateStatusBar();
+  }
+
+  /* 판매 목록 렌더링 — 검색 필터 + 월 필터를 함께 적용 (기존 renderSales 를 대체) */
+  function renderSales() {
+    renderMonthFilterButtons('s_month_filter', sales, sMonthFilter, 'setSalesMonthFilter');
+    const body = $('s_table_body');
+    body.innerHTML = '';
+    const list = sales.filter(function (s) {
+      return matchesFilter(s, sFilter) && (sMonthFilter === 'ALL' || getMonthKey(s.date) === sMonthFilter);
+    });
+    if (list.length === 0) {
+      const msg = sales.length === 0 ? '등록된 판매 내역이 없습니다.' : '해당 조건의 판매 내역이 없습니다.';
+      body.innerHTML = '<tr class="empty-row"><td colspan="12">' + msg + '</td></tr>';
+    } else {
+      list.forEach(function (s, i) {
+        const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
+        const marginRate = s.price > 0 ? ((s.margin / s.price) * 100).toFixed(1) : '0.0';
+        const tr = document.createElement('tr');
+        if (s.id === sEditId) tr.classList.add('editing-row');
+        tr.innerHTML =
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escapeHtml(s.date) + '</td>' +
+          '<td style="text-align:left;">' + escapeHtml(s.model) + '</td>' +
+          '<td>' + escapeHtml(s.imei) + '</td>' +
+          '<td>' + escapeHtml(s.color || '-') + '</td>' +
+          '<td>' + escapeHtml(s.grade || '-') + '</td>' +
+          '<td style="text-align:right;">' + comma(s.cost) + '</td>' +
+          '<td style="text-align:right;">' + comma(s.price) + '</td>' +
+          '<td class="' + marginClass + '">' + comma(s.margin) + '</td>' +
+          '<td class="' + marginClass + '">' + marginRate + '%</td>' +
+          '<td style="text-align:left;">' + escapeHtml(s.note || '-') + '</td>' +
+          '<td><button class="btn-edit" onclick="editSaleRow(\'' + s.id + '\')">수정</button><button class="btn-del" onclick="cancelSale(\'' + s.id + '\')">취소</button></td>';
+        body.appendChild(tr);
+      });
+    }
+    updateStatusBar();
+  }
+
+  /* 데이터가 이미 로드되어 있는 상태(탭 전환 없이 이 스크립트가 뒤늦게 실행된 경우 등)라면
+     화면에 월 필터 버튼이 바로 보이도록 한 번 더 그려줌 */
+  if (typeof purchases !== 'undefined' && purchases.length) renderPurchases();
+  if (typeof sales !== 'undefined' && sales.length) renderSales();
 </script>
 </body>
 </html>
