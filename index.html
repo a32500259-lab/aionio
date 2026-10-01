@@ -419,6 +419,50 @@
     .month-filter-row { padding: 0 16px 12px 16px; }
   }
 </style>
+
+<style>
+  /* ===== 판매목록 IMEI 더블클릭 → 매입정보 팝업 (추가) ===== */
+  td.imei-cell { cursor: pointer; user-select: none; }
+  td.imei-cell:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 3px; }
+  .pm-backdrop {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(16,24,40,0.45);
+    display: none; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .pm-backdrop.show { display: flex; }
+  .pm-card {
+    width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: 0 16px 40px rgba(16,24,40,0.28);
+  }
+  .pm-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    font-size: 15px; font-weight: 800; color: var(--text);
+  }
+  .pm-head .pm-x {
+    border: none; background: transparent; font-size: 22px; line-height: 1;
+    color: var(--text-mute); cursor: pointer; padding: 2px 8px; border-radius: 6px;
+  }
+  .pm-head .pm-x:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .pm-body { padding: 18px 20px 6px 20px; }
+  .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pm-grid .field { flex: none; min-width: 0; }
+  .pm-grid .full { grid-column: 1 / -1; }
+  .pm-sale {
+    margin: 16px 0 0 0; padding: 11px 14px; border-radius: 8px;
+    background: var(--accent-light); color: var(--navy);
+    font-size: 12.5px; font-weight: 600; line-height: 1.6;
+  }
+  .pm-foot {
+    display: flex; align-items: center; gap: 10px; justify-content: flex-end;
+    padding: 14px 20px 18px 20px;
+  }
+  .pm-foot .pm-hint { margin-right: auto; font-size: 12px; color: var(--danger); font-weight: 600; }
+  .pm-foot .pm-hint.ok { color: var(--success); }
+  @media (max-width: 540px) { .pm-grid { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
 
@@ -741,6 +785,59 @@
   <div>판매완료: <b id="stat_sold">0</b>건</div>
   <div>총 마진: <b id="stat_margin">0</b>원</div>
 </div>
+</div>
+
+<!-- 판매목록 IMEI 더블클릭 시 뜨는 매입정보 팝업 -->
+<div class="pm-backdrop" id="pm_backdrop">
+  <div class="pm-card" role="dialog" aria-modal="true" aria-labelledby="pm_title">
+    <div class="pm-head">
+      <span id="pm_title">매입 정보</span>
+      <button type="button" class="pm-x" onclick="closePurchaseModal()" aria-label="닫기">×</button>
+    </div>
+    <div class="pm-body">
+      <div class="pm-grid">
+        <div class="field">
+          <label>매입일</label>
+          <input type="date" id="pm_date">
+        </div>
+        <div class="field">
+          <label>매입가 (원)</label>
+          <input type="text" id="pm_cost" inputmode="numeric" oninput="formatMoneyInput(this); updatePmSaleInfo()">
+        </div>
+        <div class="field full">
+          <label>모델명</label>
+          <input type="text" id="pm_model">
+        </div>
+        <div class="field full">
+          <label>IMEI</label>
+          <input type="text" id="pm_imei" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>색상</label>
+          <input type="text" id="pm_color">
+        </div>
+        <div class="field">
+          <label>등급</label>
+          <select id="pm_grade">
+            <option value="S">S (신품급)</option>
+            <option value="A">A (상급)</option>
+            <option value="B">B (중급)</option>
+            <option value="C">C (하급)</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>특이사항 (매입 시)</label>
+          <input type="text" id="pm_note">
+        </div>
+      </div>
+      <div class="pm-sale" id="pm_sale_info"></div>
+    </div>
+    <div class="pm-foot">
+      <span class="pm-hint" id="pm_hint"></span>
+      <button type="button" class="btn-ghost" onclick="closePurchaseModal()">닫기</button>
+      <button type="button" class="btn btn-main" id="pm_save_btn" onclick="savePurchaseModal()">저장</button>
+    </div>
+  </div>
 </div>
 
 <!-- Firebase (compat SDK) -->
@@ -1126,7 +1223,7 @@ function renderSales() {
         <td>${i + 1}</td>
         <td>${escapeHtml(s.date)}</td>
         <td style="text-align:left;">${escapeHtml(s.model)}</td>
-        <td>${escapeHtml(s.imei)}</td>
+        <td class="imei-cell" title="더블클릭하면 매입 정보를 보고 수정할 수 있어요" ondblclick="openPurchaseModalFromSale('${s.id}')">${escapeHtml(s.imei)}</td>
         <td>${escapeHtml(s.color || '-')}</td>
         <td>${escapeHtml(s.grade || '-')}</td>
         <td style="text-align:right;">${comma(s.cost)}</td>
@@ -1761,7 +1858,7 @@ function showScreen(which) {
           '<td>' + (i + 1) + '</td>' +
           '<td>' + escapeHtml(s.date) + '</td>' +
           '<td style="text-align:left;">' + escapeHtml(s.model) + '</td>' +
-          '<td>' + escapeHtml(s.imei) + '</td>' +
+          '<td class="imei-cell" title="더블클릭하면 매입 정보를 보고 수정할 수 있어요" ondblclick="openPurchaseModalFromSale(\'' + s.id + '\')">' + escapeHtml(s.imei) + '</td>' +
           '<td>' + escapeHtml(s.color || '-') + '</td>' +
           '<td>' + escapeHtml(s.grade || '-') + '</td>' +
           '<td style="text-align:right;">' + comma(s.cost) + '</td>' +
@@ -1780,6 +1877,111 @@ function showScreen(which) {
      화면에 월 필터 버튼이 바로 보이도록 한 번 더 그려줌 */
   if (typeof purchases !== 'undefined' && purchases.length) renderPurchases();
   if (typeof sales !== 'undefined' && sales.length) renderSales();
+</script>
+
+<script>
+  /* ============ 판매목록 IMEI 더블클릭 → 매입정보 팝업 (추가) ============ */
+  let pmPurchaseId = null;   // 팝업에서 보고 있는 매입 문서 id
+
+  // 판매 건 → 연결된 매입 건 찾기 (purchaseId 우선, 없으면 IMEI로 보조 탐색)
+  function findPurchaseOfSale(s) {
+    let p = s.purchaseId ? purchases.find(function (x) { return x.id === s.purchaseId; }) : null;
+    if (!p) {
+      p = purchases.find(function (x) { return x.imei === s.imei && x.status === '판매완료'; }) ||
+          purchases.find(function (x) { return x.imei === s.imei; });
+    }
+    return p || null;
+  }
+
+  function openPurchaseModalFromSale(saleId) {
+    const s = sales.find(function (x) { return x.id === saleId; });
+    if (!s) return;
+    const p = findPurchaseOfSale(s);
+    if (!p) {
+      alert('이 판매 건과 연결된 매입 기록을 찾을 수 없습니다.');
+      return;
+    }
+    pmPurchaseId = p.id;
+    $('pm_title').textContent = '매입 정보 — ' + (p.model || '');
+    $('pm_date').value = p.date || '';
+    $('pm_model').value = p.model || '';
+    $('pm_imei').value = p.imei || '';
+    $('pm_color').value = p.color || '';
+    $('pm_grade').value = p.grade || 'S';
+    $('pm_cost').value = comma(p.cost);
+    $('pm_note').value = p.note || '';
+    $('pm_hint').textContent = '';
+    $('pm_hint').classList.remove('ok');
+    updatePmSaleInfo();
+    $('pm_backdrop').classList.add('show');
+    $('pm_model').focus();
+  }
+
+  // 매입가를 고치면 연결된 판매 건의 마진이 어떻게 바뀌는지 바로 보여줌
+  function updatePmSaleInfo() {
+    const box = $('pm_sale_info');
+    const linked = sales.filter(function (s) { return s.purchaseId === pmPurchaseId; });
+    if (!linked.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    const s = linked[0];
+    const price = Number(s.price) || 0;
+    const margin = price - parseMoney($('pm_cost').value);
+    const rate = price > 0 ? ((margin / price) * 100).toFixed(1) : '0.0';
+    box.textContent = '연결된 판매: ' + s.date + ' · 판매가 ' + comma(price) + '원 → 마진 ' +
+      comma(margin) + '원 (' + rate + '%)';
+  }
+
+  function closePurchaseModal() {
+    $('pm_backdrop').classList.remove('show');
+    pmPurchaseId = null;
+  }
+
+  async function savePurchaseModal() {
+    if (busy || !pmPurchaseId) return;
+    const hint = $('pm_hint');
+    hint.classList.remove('ok');
+    const date = $('pm_date').value || todayStr();
+    const model = $('pm_model').value.trim();
+    const imei = $('pm_imei').value.trim();
+    const color = $('pm_color').value.trim();
+    const grade = $('pm_grade').value;
+    const cost = parseMoney($('pm_cost').value);
+    const note = $('pm_note').value.trim();
+
+    if (!model || !imei) {
+      hint.textContent = '모델명과 IMEI는 필수 입력 항목입니다.';
+      return;
+    }
+    // 같은 IMEI가 다른 "재고"로 이미 있으면 차단 (기존 매입 수정과 같은 규칙)
+    if (purchases.some(function (p) { return p.imei === imei && p.id !== pmPurchaseId && p.status === '재고'; })) {
+      hint.textContent = '이미 재고에 등록된 IMEI입니다.';
+      return;
+    }
+
+    busy = true;
+    $('pm_save_btn').disabled = true;
+    // 매입 수정 + 연결된 판매 기록(모델·IMEI·색상·등급·매입가·마진)도 함께 갱신
+    const batch = db.batch();
+    batch.update(pcol().doc(pmPurchaseId), { date, model, imei, color, grade, cost, note });
+    const linked = sales.filter(function (s) { return s.purchaseId === pmPurchaseId; });
+    linked.forEach(function (s) {
+      batch.update(scol().doc(s.id), {
+        model, imei, color, grade, cost,
+        margin: (Number(s.price) || 0) - cost
+      });
+    });
+    const ok = await saveWrite(batch.commit());
+    busy = false;
+    $('pm_save_btn').disabled = false;
+    if (ok) closePurchaseModal();
+  }
+
+  // Esc 로 닫기 / 입력칸에서 Enter 로 저장
+  document.addEventListener('keydown', function (e) {
+    if (!$('pm_backdrop').classList.contains('show')) return;
+    if (e.key === 'Escape') { closePurchaseModal(); }
+    else if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') { savePurchaseModal(); }
+  });
 </script>
 </body>
 </html>
