@@ -1,0 +1,2642 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>aionio</title>
+<!-- 어플처럼 설치되기 위한 설정 (PWA) -->
+<meta name="theme-color" content="#1F2A44">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="aionio">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script>
+  /* 저장된 화면 모드(다크/라이트)를 깜빡임 없이 먼저 적용 */
+  try { var __t = localStorage.getItem('aionio_theme'); if (__t) document.documentElement.setAttribute('data-theme', __t); } catch (e) {}
+</script>
+<style>
+  :root {
+    --navy: #1F2A44;
+    --navy-2: #2B3A5E;
+    --navy-3: #161E33;
+    --accent: #3E63DD;
+    --accent-dark: #2F4EC0;
+    --accent-light: #EEF2FF;
+    --success: #1E9E6B;
+    --success-light: #E7F8F0;
+    --danger: #E1483E;
+    --danger-light: #FDECEB;
+    --amber: #B8720B;
+    --amber-light: #FCF1DC;
+    --border: #E3E6EC;
+    --bg: #F4F6FB;
+    --surface: #FFFFFF;
+    --surface-2: #FAFBFD;
+    --row-alt: #FBFCFE;
+    --row-line: #EEF0F4;
+    --chip: #EEF0F4;
+    --text: #1D2433;
+    --text-mute: #6B7280;
+    --text-faint: #9AA2B1;
+    --radius: 14px;
+    --shadow-sm: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
+    --shadow-md: 0 6px 16px rgba(16,24,40,0.08);
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0E121B;
+    --surface: #171C27;
+    --surface-2: #1B2130;
+    --row-alt: #1A1F2B;
+    --row-line: #222939;
+    --chip: #262C3A;
+    --text: #E6E9F2;
+    --text-mute: #9AA3B5;
+    --text-faint: #6B7384;
+    --border: #2A3142;
+    --accent-light: #232C4F;
+    --accent-dark: #93A8F7;
+    --success: #34C089;
+    --success-light: #12312A;
+    --danger: #FF7468;
+    --danger-light: #3A1F20;
+    --amber: #E5A13A;
+    --amber-light: #3A2E14;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 6px 16px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Pretendard", -apple-system, "Malgun Gothic", "맑은 고딕", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ===== App shell ===== */
+  #app { display: none; height: 100vh; height: 100dvh; }
+  .shell { display: flex; height: 100%; }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: 232px; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-3) 100%);
+    color: #B7C2E3;
+    display: flex; flex-direction: column;
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px;
+  }
+  .side-brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 22px 8px; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent) 0%, #7C93F0 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px; color: #fff;
+    box-shadow: 0 4px 12px rgba(62,99,221,0.4); flex-shrink: 0;
+  }
+  .brand-name { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.2; }
+  .brand-tag { font-size: 11px; color: #8F9CC4; font-weight: 500; }
+  .side-label {
+    font-size: 10.5px; letter-spacing: 0.9px; font-weight: 700;
+    color: #6F7DA6; padding: 4px 12px 8px 12px;
+  }
+  .nav { display: flex; flex-direction: column; }
+  .tab {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; margin-bottom: 4px;
+    border-radius: 11px; cursor: pointer;
+    font-weight: 700; font-size: 13.5px; color: #B7C2E3;
+    position: relative; white-space: nowrap;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .tab svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.07); color: #fff; }
+  .tab.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(62,99,221,0.4); }
+  .tab .count {
+    margin-left: auto; font-size: 11px; font-weight: 800;
+    background: rgba(255,255,255,0.13); color: #fff;
+    padding: 1px 9px; border-radius: 999px; min-width: 24px; text-align: center;
+  }
+  .tab.active .count { background: rgba(255,255,255,0.26); }
+  .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
+  .logout-btn {
+    background: rgba(255,255,255,0.07); color: #E7EAF3;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 9px 14px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 700; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.15); }
+
+  /* ===== Main ===== */
+  .main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .topbar {
+    display: flex; align-items: center; gap: 14px;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 28px 10px 28px;
+  }
+  .mobile-mark {
+    display: none; width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent) 0%, #7C93F0 100%);
+    color: #fff; font-weight: 800; align-items: center; justify-content: center;
+  }
+  .topbar h1 { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.25; }
+  .page-sub { font-size: 12px; color: var(--text-mute); font-weight: 500; }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .save-status {
+    font-size: 11.5px; font-weight: 700; white-space: nowrap;
+    background: var(--navy); padding: 6px 12px; border-radius: 999px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-mute);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-sm); transition: background 0.15s, color 0.15s;
+  }
+  .icon-btn:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .tools { position: relative; }
+  .tools-menu {
+    position: absolute; right: 0; top: 44px; min-width: 210px; z-index: 700;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 6px; box-shadow: var(--shadow-md);
+    display: none;
+  }
+  .tools-menu.show { display: block; }
+  .tools-menu button {
+    display: block; width: 100%; text-align: left;
+    background: none; border: none; color: var(--text);
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+  }
+  .tools-menu button:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .tools-menu button.danger { color: var(--danger); }
+  .tools-menu hr { border: none; border-top: 1px solid var(--border); margin: 4px 6px; }
+
+  .quick { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 28px 14px 28px; }
+  .qs {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 13px;
+    font-size: 12px; color: var(--text-mute); font-weight: 600;
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .qs b { color: var(--text); font-weight: 800; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .qs.green b { color: var(--success); }
+
+  .content {
+    flex: 1; min-height: 0; overflow: hidden;
+    display: flex; flex-direction: column;
+    padding: 0 28px 24px 28px;
+  }
+  .page { display: none; }
+  .page.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  #page-monthly.active { overflow-y: auto; padding-bottom: 8px; }
+  #page-monthly > * { flex-shrink: 0; }
+
+  /* ===== Panels ===== */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .list-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; }
+  .panel-title {
+    display: flex; align-items: center; gap: 9px;
+    padding: 14px 18px;
+    font-weight: 800; font-size: 14px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .panel-title::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+  }
+  .count-pill {
+    background: var(--accent-light); color: var(--accent-dark);
+    font-size: 11.5px; font-weight: 800; padding: 2px 10px; border-radius: 999px;
+  }
+  .panel-search {
+    margin-left: auto;
+    border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text);
+    border-radius: 999px; padding: 7px 15px;
+    font-size: 12.5px; font-family: inherit;
+    width: 220px; max-width: 100%; font-weight: 500;
+  }
+  .panel-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .panel-body { padding: 18px; }
+
+  /* ===== Buttons ===== */
+  .btn {
+    border: none; border-radius: 10px; padding: 9px 20px;
+    font-size: 13.5px; font-weight: 700; cursor: pointer;
+    font-family: inherit; height: 38px; white-space: nowrap;
+    transition: filter 0.15s, transform 0.05s, background 0.15s;
+  }
+  .btn:disabled { opacity: 0.6; cursor: default; }
+  .btn-main { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(62,99,221,0.35); }
+  .btn-main:hover { filter: brightness(0.93); }
+  .btn-main:active { transform: translateY(1px); }
+  .btn-nav {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border);
+    padding: 7px 14px; font-size: 13.5px; border-radius: 9px;
+    cursor: pointer; font-weight: 700; font-family: inherit;
+  }
+  .btn-nav:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); }
+  .btn-del {
+    background: var(--surface); color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    padding: 4px 11px; font-size: 11.5px; border-radius: 999px;
+    cursor: pointer; font-weight: 700; font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .btn-edit {
+    background: var(--surface); color: var(--accent-dark);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    padding: 4px 11px; font-size: 11.5px; border-radius: 999px;
+    cursor: pointer; font-weight: 700; font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+    margin-right: 4px;
+  }
+  .btn-edit:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-ghost {
+    background: var(--surface); color: var(--text-mute);
+    border: 1px solid var(--border);
+    padding: 9px 18px; font-size: 13.5px; border-radius: 10px;
+    cursor: pointer; font-weight: 700; font-family: inherit; height: 38px;
+  }
+  .btn-ghost:hover { background: var(--chip); }
+
+  /* ===== Form fields ===== */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11.5px; color: var(--text-mute); font-weight: 700; letter-spacing: 0.2px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .field input, .field select {
+    border: 1px solid var(--border);
+    border-radius: 9px; padding: 9px 12px;
+    font-size: 14px; font-family: inherit;
+    background: var(--surface); color: var(--text);
+    width: 100%; height: 40px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .field input[readonly] { background: var(--surface-2); color: var(--accent-dark); font-weight: 700; }
+  .field input.mono-in { font-family: var(--mono); letter-spacing: 0.3px; font-variant-numeric: tabular-nums; }
+  .field input.num { text-align: right; }
+  .imei-help { font-size: 11.5px; font-weight: 700; min-height: 16px; color: var(--text-faint); }
+  .imei-help.ok { color: var(--success); }
+  .imei-help.warn { color: var(--amber); }
+
+  .hint { font-size: 12.5px; color: var(--danger); min-height: 18px; font-weight: 600; line-height: 1.4; }
+  .hint.ok { color: var(--success); }
+
+  /* ===== Slide-over ===== */
+  .so-backdrop {
+    position: fixed; inset: 0; z-index: 800;
+    background: rgba(12,18,32,0.5);
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none; transition: opacity 0.28s;
+  }
+  .so-backdrop.show { opacity: 1; pointer-events: auto; }
+  .slideover {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 810;
+    width: min(470px, 100vw);
+    background: var(--surface);
+    display: flex; flex-direction: column;
+    box-shadow: -18px 0 48px rgba(12,18,32,0.3);
+    transform: translateX(104%); visibility: hidden;
+    transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.34s;
+  }
+  .slideover.show { transform: none; visibility: visible; transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s; }
+  .so-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 24px 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .so-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .so-head p { font-size: 12.5px; color: var(--text-mute); margin-top: 2px; }
+  .so-x {
+    border: none; background: transparent; font-size: 26px; line-height: 1;
+    color: var(--text-mute); cursor: pointer; padding: 2px 9px; border-radius: 8px;
+  }
+  .so-x:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .so-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; }
+  .form-grid .field { min-width: 0; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .so-note {
+    grid-column: 1 / -1; background: var(--accent-light); color: var(--accent-dark);
+    border-radius: 10px; padding: 10px 13px; font-size: 12.5px; font-weight: 600;
+  }
+  .so-foot {
+    padding: 14px 24px calc(18px + env(safe-area-inset-bottom, 0px)) 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .so-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .so-actions .btn-main { flex: 1; height: 42px; font-size: 14px; }
+  .so-actions .btn-ghost { height: 42px; }
+
+  /* ===== Table ===== */
+  .table-wrap { flex: 1; min-height: 0; overflow: auto; }
+  .table-wrap.short { flex: none; max-height: 340px; }
+  table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  #page-purchase table { min-width: 940px; }
+  #page-sales table { min-width: 1140px; }
+  thead th {
+    position: sticky; top: 0; z-index: 3;
+    background: var(--surface-2); color: var(--text-mute);
+    padding: 11px 12px; text-align: center;
+    font-weight: 700; font-size: 11.5px;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th.l { text-align: left; }
+  thead th.r { text-align: right; }
+  tbody td {
+    padding: 11px 12px; text-align: center;
+    border-bottom: 1px solid var(--row-line);
+    background: var(--surface); color: var(--text);
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) td { background: var(--row-alt); }
+  tbody tr:hover td { background: var(--accent-light); }
+  tbody tr.editing-row td { background: var(--amber-light) !important; }
+  .empty-row td { padding: 44px; color: var(--text-faint); font-weight: 500; }
+  /* 날짜 · IMEI · 금액은 고정폭 숫자 */
+  #p_table_body td:nth-child(2), #p_table_body td:nth-child(4), #p_table_body td:nth-child(7),
+  #s_table_body td:nth-child(2), #s_table_body td:nth-child(4), #s_table_body td:nth-child(7),
+  #s_table_body td:nth-child(8), #s_table_body td:nth-child(9), #s_table_body td:nth-child(10),
+  #m_purchase_table td:nth-child(2), #m_purchase_table td:nth-child(4), #m_purchase_table td:nth-child(7),
+  #m_sales_table td:nth-child(2), #m_sales_table td:nth-child(4), #m_sales_table td:nth-child(5),
+  #m_sales_table td:nth-child(6), #m_sales_table td:nth-child(7) {
+    font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0.2px; font-size: 12.5px;
+  }
+  td.imei-cell { cursor: pointer; user-select: none; }
+  td.imei-cell:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 3px; }
+
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 3px 11px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 800; min-width: 28px; line-height: 1.5;
+  }
+  .badge-stock::before, .badge-sold::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  }
+  .badge-stock { background: var(--success-light); color: var(--success); }
+  .badge-sold { background: var(--chip); color: var(--text-mute); }
+  .badge-grade-S { background: var(--amber-light); color: var(--amber); }
+  .badge-grade-A { background: var(--success-light); color: var(--success); }
+  .badge-grade-B { background: var(--accent-light); color: var(--accent-dark); }
+  .badge-grade-C { background: var(--danger-light); color: var(--danger); }
+  .margin-pos { color: var(--success); font-weight: 700; }
+  .margin-neg { color: var(--danger); font-weight: 700; }
+
+  /* ===== Month filter chips ===== */
+  .month-filter-row {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .month-filter-btn {
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-mute); border-radius: 999px;
+    padding: 5px 14px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .month-filter-btn:hover { background: var(--accent-light); color: var(--accent-dark); border-color: var(--accent); }
+  .month-filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ===== Dashboard ===== */
+  .dash-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .dash-head .month-label { font-size: 17px; font-weight: 800; min-width: 118px; text-align: center; letter-spacing: -0.3px; }
+  .dash-head input[type="month"] {
+    border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text);
+    padding: 6px 10px; font-family: inherit; font-size: 13px; height: 36px;
+  }
+  .stat-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px; position: relative; overflow: hidden;
+    box-shadow: var(--shadow-sm); display: flex; gap: 14px; align-items: flex-start;
+  }
+  .stat-card .ico {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--tint, var(--accent-light)); color: var(--clr, var(--accent));
+  }
+  .stat-card .ico svg { width: 20px; height: 20px; }
+  .stat-card .label { font-size: 12.5px; color: var(--text-mute); font-weight: 700; }
+  .stat-card .value {
+    font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-top: 2px;
+    font-variant-numeric: tabular-nums; line-height: 1.25;
+  }
+  .stat-card .sub { font-size: 11.5px; color: var(--text-faint); margin-top: 3px; font-weight: 500; }
+  .stat-card.blue { --clr: var(--accent); --tint: var(--accent-light); }
+  .stat-card.green { --clr: var(--success); --tint: var(--success-light); }
+  .stat-card.amber { --clr: var(--amber); --tint: var(--amber-light); }
+  .stat-card.slate { --clr: var(--text-mute); --tint: var(--chip); }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
+  .grid-2 > .panel { margin-bottom: 0; }
+  .chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 16px 20px 0 20px; }
+  .chart-head b { font-size: 14px; font-weight: 800; }
+  .chart-head .sub { font-size: 12px; color: var(--text-mute); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 12px; font-size: 11.5px; color: var(--text-mute); font-weight: 600; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .chart-box { padding: 6px 14px 14px 14px; }
+  .chart-svg { width: 100%; height: auto; display: block; }
+  .chart-svg text { font-family: inherit; }
+  .chart-svg .dayg .hit { fill: transparent; }
+  .chart-svg .dayg:hover .hit { fill: var(--accent-light); }
+  .chart-empty { fill: var(--text-faint); font-size: 13px; font-weight: 600; }
+  .gd { padding: 16px 20px 18px 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
+  .gd-row { display: flex; align-items: center; gap: 10px; }
+  .gd-track { flex: 1; height: 10px; background: var(--chip); border-radius: 999px; overflow: hidden; }
+  .gd-fill { height: 100%; border-radius: 999px; transition: width 0.4s; }
+  .gd-row b { min-width: 42px; text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .gd-empty { grid-column: 1 / -1; text-align: center; color: var(--text-faint); font-weight: 500; padding: 14px; }
+
+  .calendar-wrap { padding: 4px 18px 18px 18px; }
+  .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-head { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-mute); padding: 8px 0 6px 0; }
+  .cal-cell {
+    min-height: 68px; background: var(--surface);
+    border: 1px solid var(--row-line); border-radius: 9px;
+    padding: 6px 7px; font-size: 11px; transition: border-color 0.15s;
+  }
+  .cal-cell:hover { border-color: var(--border); }
+  .cal-cell.empty { background: transparent; border: none; }
+  .cal-cell .daynum { font-weight: 700; color: var(--text-mute); font-size: 11.5px; }
+  .cal-cell.today { border: 1.5px solid var(--accent); background: var(--accent-light); }
+  .cal-cell.today .daynum { color: var(--accent-dark); }
+  .cal-tag { display: block; margin-top: 4px; padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+  .cal-tag.buy { background: var(--accent-light); color: var(--accent-dark); }
+  .cal-tag.sell { background: var(--success-light); color: var(--success); }
+
+  /* ===== Toast ===== */
+  .toast-wrap {
+    position: fixed; right: 22px; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); z-index: 2000;
+    display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  }
+  .toast {
+    background: var(--navy); color: #fff; padding: 11px 18px; border-radius: 11px;
+    font-weight: 700; font-size: 13px; box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+    display: flex; align-items: center; gap: 9px;
+    animation: toast-in 0.28s ease both;
+  }
+  .toast::before { content: '✓'; color: #8FE3B3; font-weight: 800; }
+  .toast.err::before { content: '!'; color: #F4C88F; }
+  .toast.out { animation: toast-out 0.25s ease both; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes toast-out { to { opacity: 0; transform: translateY(6px); } }
+
+  /* ===== Login / Setup screens ===== */
+  .overlay-screen {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle at 30% 20%, #2B3A5E 0%, #161E33 100%);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 1000; padding: 20px;
+    overflow-y: auto;
+  }
+  .overlay-screen.show { display: flex; }
+  .login-card {
+    background: var(--surface);
+    width: 340px; max-width: 100%;
+    border-radius: 16px; padding: 0 0 30px 0;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    text-align: center; overflow: hidden;
+  }
+  .login-card.wide { width: 460px; text-align: left; }
+  .login-accent { height: 6px; background: linear-gradient(90deg, var(--accent) 0%, #7C93F0 100%); }
+  .login-mark {
+    width: 52px; height: 52px;
+    margin: 26px auto 14px auto; border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent) 0%, #7C93F0 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 22px; color: #fff;
+    box-shadow: var(--shadow-md);
+  }
+  .login-card h1 { font-size: 21px; font-weight: 800; color: var(--navy); letter-spacing: -0.3px; margin-bottom: 4px; text-align: center; }
+  .login-card .login-sub { font-size: 12px; color: var(--text-faint); margin-bottom: 24px; font-weight: 500; text-align: center; }
+  .login-field { text-align: left; margin: 0 30px 12px 30px; }
+  .login-field label {
+    display: block; font-size: 11px; font-weight: 700;
+    color: var(--text-mute); margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .login-field input {
+    width: 100%; border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+    font-size: 13.5px; font-family: inherit; height: 40px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .login-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .login-remember {
+    display: flex; align-items: center; gap: 7px;
+    margin: 0 30px 16px 30px;
+  }
+  .login-remember input[type="checkbox"] {
+    width: 15px; height: 15px; accent-color: var(--accent);
+    cursor: pointer; flex-shrink: 0;
+  }
+  .login-remember label {
+    font-size: 12.5px; color: var(--text-mute); font-weight: 600;
+    cursor: pointer; user-select: none;
+  }
+  .login-btn {
+    width: calc(100% - 60px);
+    margin: 6px 30px 0 30px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 8px; padding: 11px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
+  }
+  .login-btn:hover { background: var(--accent-dark); }
+  .login-btn:disabled { opacity: 0.6; cursor: default; }
+  .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; min-height: 15px; font-weight: 600; text-align: center; padding: 0 20px; }
+  .setup-steps { margin: 0 30px 20px 30px; font-size: 13px; color: var(--text); }
+  .setup-steps li { margin-bottom: 8px; margin-left: 18px; }
+  .setup-note {
+    margin: 0 30px; padding: 12px 14px;
+    background: var(--amber-light); color: var(--amber);
+    border-radius: 8px; font-size: 12px; font-weight: 600;
+  }
+  
+  .login-card.wide .login-sub { text-align: left; margin-left: 30px; margin-right: 30px; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 1180px) {
+    .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 860px) {
+    /* 모바일: 사이드바가 하단 탭바로 바뀜 (어플 느낌) */
+    .shell { flex-direction: column-reverse; }
+    .sidebar {
+      width: 100%; flex-direction: row; padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
+      background: var(--navy); box-shadow: 0 -4px 16px rgba(0,0,0,0.18);
+    }
+    .side-brand, .side-label, .side-foot { display: none; }
+    .nav { flex-direction: row; width: 100%; gap: 4px; }
+    .tab {
+      flex: 1; flex-direction: column; gap: 3px; margin: 0;
+      padding: 8px 4px; font-size: 11.5px; justify-content: center; text-align: center;
+    }
+    .tab.active { box-shadow: none; }
+    .tab .count { position: absolute; top: 2px; right: calc(50% - 30px); margin: 0; padding: 0 6px; min-width: 18px; font-size: 10px; }
+    .mobile-mark { display: flex; }
+    .topbar { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 8px 16px; gap: 10px; }
+    .topbar h1 { font-size: 18px; }
+    .quick { padding: 2px 16px 10px 16px; flex-wrap: nowrap; overflow-x: auto; }
+    .content { padding: 0 14px 14px 14px; }
+    .toast-wrap { right: 14px; left: 14px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); align-items: center; }
+    .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .stat-card { padding: 14px; gap: 10px; }
+    .stat-card .ico { display: none; }
+    .stat-card .value { font-size: 19px; }
+    .gd { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 540px) {
+    .save-status { padding: 5px 9px; font-size: 10.5px; }
+    .panel-search { width: 100%; margin-left: 0; order: 5; }
+    .panel-title { padding: 12px 14px; }
+    .month-filter-row { padding: 10px 14px; }
+    .form-grid { gap: 16px 12px; }
+    .so-body, .so-head, .so-foot { padding-left: 18px; padding-right: 18px; }
+    .cal-cell { min-height: 46px; font-size: 10px; padding: 4px 5px; }
+    .cal-tag { font-size: 9px; padding: 1px 4px; }
+    .page-sub { font-size: 11px; }
+  }
+
+</style>
+<style>
+  /* ===== 판매목록 IMEI 더블클릭 → 매입정보 팝업 (추가) ===== */
+  td.imei-cell { cursor: pointer; user-select: none; }
+  td.imei-cell:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 3px; }
+  .pm-backdrop {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(16,24,40,0.45);
+    display: none; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .pm-backdrop.show { display: flex; }
+  .pm-card {
+    width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: 0 16px 40px rgba(16,24,40,0.28);
+  }
+  .pm-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    font-size: 15px; font-weight: 800; color: var(--text);
+  }
+  .pm-head .pm-x {
+    border: none; background: transparent; font-size: 22px; line-height: 1;
+    color: var(--text-mute); cursor: pointer; padding: 2px 8px; border-radius: 6px;
+  }
+  .pm-head .pm-x:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .pm-body { padding: 18px 20px 6px 20px; }
+  .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pm-grid .field { flex: none; min-width: 0; }
+  .pm-grid .full { grid-column: 1 / -1; }
+  .pm-sale {
+    margin: 16px 0 0 0; padding: 11px 14px; border-radius: 8px;
+    background: var(--accent-light); color: var(--navy);
+    font-size: 12.5px; font-weight: 600; line-height: 1.6;
+  }
+  .pm-foot {
+    display: flex; align-items: center; gap: 10px; justify-content: flex-end;
+    padding: 14px 20px 18px 20px;
+  }
+  .pm-foot .pm-hint { margin-right: auto; font-size: 12px; color: var(--danger); font-weight: 600; }
+  .pm-foot .pm-hint.ok { color: var(--success); }
+  @media (max-width: 540px) { .pm-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- 파이어베이스 설정을 아직 안 붙여넣었을 때 표시되는 안내 화면 -->
+<div class="overlay-screen" id="setup-screen">
+  <div class="login-card wide">
+    <div class="login-accent"></div>
+    <div class="login-mark">a</div>
+    <h1>파이어베이스 설정이 필요합니다</h1>
+    <div class="login-sub">딱 한 번만 하면 됩니다 (약 10분)</div>
+    <ol class="setup-steps">
+      <li>함께 받은 <b>「파이어베이스 설치가이드」</b> 파일을 엽니다.</li>
+      <li>가이드 1~5단계를 따라 파이어베이스 무료 프로젝트를 만듭니다.</li>
+      <li>가이드 6단계에서 복사한 설정값을 이 파일(index.html)을 메모장으로 열어
+          <b>"파이어베이스 설정" 부분</b>에 붙여넣습니다.</li>
+      <li>파일을 저장하고 깃허브에 다시 올리면 끝!</li>
+    </ol>
+    <div class="setup-note">이 화면이 계속 보인다면 아직 설정값이 붙여넣어지지 않은 것입니다.</div>
+  </div>
+</div>
+
+<!-- 로그인 화면 -->
+<div class="overlay-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-accent"></div>
+    <div class="login-mark">a</div>
+    <h1>aionio</h1>
+    <div class="login-sub">로그인 후 이용해주세요</div>
+    <div class="login-field">
+      <label>이메일</label>
+      <input type="email" id="login_email" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login_pw').focus()">
+    </div>
+    <div class="login-field">
+      <label>비밀번호</label>
+      <input type="password" id="login_pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-remember">
+      <input type="checkbox" id="login_remember">
+      <label for="login_remember">아이디 저장</label>
+    </div>
+    <button class="login-btn" id="login_btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="login_error"></div>
+  </div>
+</div>
+
+
+
+<div id="app">
+<div class="shell">
+
+  <!-- ===== 좌측 사이드바 ===== -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-mark">a</div>
+      <div>
+        <div class="brand-name">aionio</div>
+        <div class="brand-tag">매입 · 판매 · 재고</div>
+      </div>
+    </div>
+    <div class="side-label">MENU</div>
+    <nav class="nav">
+      <div class="tab active" data-tab="purchase" onclick="switchTab('purchase')" role="button" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M8.5 8.5L12 12l3.5-3.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        <span>매입 관리</span><span class="count" id="nav_stock" title="현재 재고 수">0</span>
+      </div>
+      <div class="tab" data-tab="sales" onclick="switchTab('sales')" role="button" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l10 10-6 6L4 10V4z"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+        <span>판매 관리</span>
+      </div>
+      <div class="tab" data-tab="monthly" onclick="switchTab('monthly')" role="button" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        <span>대시보드</span>
+      </div>
+    </nav>
+    <div class="side-foot">
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </aside>
+
+  <!-- ===== 메인 ===== -->
+  <main class="main">
+    <header class="topbar">
+      <div class="mobile-mark">a</div>
+      <div>
+        <h1 id="page_title">매입 관리</h1>
+        <div class="page-sub" id="header_date"></div>
+      </div>
+      <div class="top-right">
+        <div class="save-status" id="save_status">● 연결 중...</div>
+        <div class="tools">
+          <button class="icon-btn" id="tools_btn" type="button" aria-haspopup="true" aria-expanded="false" title="더보기">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+          </button>
+          <div class="tools-menu" id="tools_menu">
+            <button type="button" onclick="exportCsv()">⬇&nbsp; 엑셀(CSV) 내려받기</button>
+            <button type="button" onclick="document.getElementById('legacy_file').click()">⬆&nbsp; 예전 백업 가져오기</button>
+            <button type="button" id="theme_btn">◐&nbsp; 다크 모드</button>
+            <hr>
+            <button type="button" class="danger" onclick="doLogout()">로그아웃</button>
+          </div>
+          <input type="file" id="legacy_file" accept="application/json" style="display:none" onchange="handleLegacyFile(event)">
+        </div>
+      </div>
+    </header>
+
+    <div class="quick">
+      <div class="qs">전체 매입 <b id="stat_total">0</b>건</div>
+      <div class="qs">재고 <b id="stat_stock">0</b>건</div>
+      <div class="qs">판매완료 <b id="stat_sold">0</b>건</div>
+      <div class="qs green">총 마진 <b id="stat_margin">0</b>원</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ================= 매입관리 ================= -->
+      <div class="page active" id="page-purchase">
+        <div class="panel list-panel">
+          <div class="panel-title">매입 목록 <span class="count-pill" id="p_count">0건</span>
+            <input class="panel-search" id="p_search" placeholder="모델명·IMEI 검색" oninput="setPurchaseFilter(this.value)">
+            <button class="btn btn-main" type="button" onclick="openSlide('purchase')">＋ 매입 등록</button>
+          </div>
+          <div class="month-filter-row" id="p_month_filter"></div>
+          <div class="table-wrap"><table>
+            <thead>
+              <tr>
+                <th style="width:50px;">No</th>
+                <th style="width:110px;">매입일</th>
+                <th class="l">모델명</th>
+                <th style="width:150px;">IMEI</th>
+                <th style="width:80px;">색상</th>
+                <th style="width:70px;">등급</th>
+                <th class="r" style="width:110px;">매입가</th>
+                <th class="l">특이사항</th>
+                <th style="width:100px;">상태</th>
+                <th style="width:130px;">관리</th>
+              </tr>
+            </thead>
+            <tbody id="p_table_body"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ================= 판매관리 ================= -->
+      <div class="page" id="page-sales">
+        <div class="panel list-panel">
+          <div class="panel-title">판매 목록 <span class="count-pill" id="s_count">0건</span>
+            <input class="panel-search" id="s_search" placeholder="모델명·IMEI 검색" oninput="setSalesFilter(this.value)">
+            <button class="btn btn-main" type="button" onclick="openSlide('sales')">＋ 판매 등록</button>
+          </div>
+          <div class="month-filter-row" id="s_month_filter"></div>
+          <div class="table-wrap"><table>
+            <thead>
+              <tr>
+                <th style="width:50px;">No</th>
+                <th style="width:110px;">판매일</th>
+                <th class="l">모델명</th>
+                <th style="width:150px;">IMEI</th>
+                <th style="width:80px;">색상</th>
+                <th style="width:70px;">등급</th>
+                <th class="r" style="width:105px;">매입가</th>
+                <th class="r" style="width:105px;">판매가</th>
+                <th class="r" style="width:100px;">마진</th>
+                <th class="r" style="width:80px;">마진율</th>
+                <th class="l">특이사항</th>
+                <th style="width:130px;">관리</th>
+              </tr>
+            </thead>
+            <tbody id="s_table_body"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ================= 대시보드 (월별현황) ================= -->
+      <div class="page" id="page-monthly">
+        <div class="dash-head">
+          <button class="btn-nav" onclick="monthlyShift(-1)" aria-label="이전 달">◀</button>
+          <div class="month-label" id="m_month_label"></div>
+          <button class="btn-nav" onclick="monthlyShift(1)" aria-label="다음 달">▶</button>
+          <input type="month" id="m_month_input" onchange="monthlyJump(this.value)">
+          <button class="btn-nav" onclick="monthlyToday()">이번달</button>
+        </div>
+
+        <div class="stat-cards">
+          <div class="stat-card blue">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M8.5 8.5L12 12l3.5-3.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></div>
+            <div><div class="label">총 매입 건수</div><div class="value" id="m_stat_pcount">0건</div><div class="sub">선택한 달 기준</div></div>
+          </div>
+          <div class="stat-card green">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
+            <div><div class="label">총 마진액</div><div class="value" id="m_stat_margin">0원</div><div class="sub">판매 마진 합계</div></div>
+          </div>
+          <div class="stat-card amber">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
+            <div><div class="label">재고 수</div><div class="value" id="m_stat_stock">0건</div><div class="sub" id="m_stat_stockval">재고 원가 합계 0원</div></div>
+          </div>
+          <div class="stat-card slate">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg></div>
+            <div><div class="label">매입 총액</div><div class="value" id="m_stat_pcost">0원</div><div class="sub">선택한 달 매입가 합계</div></div>
+          </div>
+          <div class="stat-card slate">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l10 10-6 6L4 10V4z"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+            <div><div class="label">판매 건수</div><div class="value" id="m_stat_scount">0건</div><div class="sub">선택한 달 기준</div></div>
+          </div>
+          <div class="stat-card green">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="17" r="2.2"/></svg></div>
+            <div><div class="label">평균 마진율</div><div class="value" id="m_stat_rate">-</div><div class="sub">마진 ÷ 판매가 합계</div></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="chart-head"><b>일별 매입 · 판매 건수</b>
+              <div class="legend"><span><i style="background:var(--accent)"></i>매입</span><span><i style="background:var(--success)"></i>판매</span></div>
+            </div>
+            <div class="chart-box" id="chart_daily"></div>
+          </div>
+          <div class="panel">
+            <div class="chart-head"><b>누적 마진 추이</b><span class="sub" id="chart_cum_total"></span></div>
+            <div class="chart-box" id="chart_cum"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="chart-head"><b>등급별 재고 현황</b><span class="sub" id="chart_grade_sub"></span></div>
+          <div class="gd" id="chart_grade"></div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <div class="panel-title">이 달의 매입 내역</div>
+            <div class="table-wrap short"><table>
+              <thead>
+                <tr>
+                  <th style="width:50px;">No</th>
+                  <th style="width:110px;">매입일</th>
+                  <th class="l">모델명</th>
+                  <th style="width:150px;">IMEI</th>
+                  <th style="width:80px;">색상</th>
+                  <th style="width:70px;">등급</th>
+                  <th class="r" style="width:110px;">매입가</th>
+                  <th style="width:100px;">상태</th>
+                </tr>
+              </thead>
+              <tbody id="m_purchase_table"></tbody>
+            </table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">이 달의 판매 내역</div>
+            <div class="table-wrap short"><table>
+              <thead>
+                <tr>
+                  <th style="width:50px;">No</th>
+                  <th style="width:110px;">판매일</th>
+                  <th class="l">모델명</th>
+                  <th style="width:150px;">IMEI</th>
+                  <th class="r" style="width:105px;">매입가</th>
+                  <th class="r" style="width:105px;">판매가</th>
+                  <th class="r" style="width:100px;">마진</th>
+                </tr>
+              </thead>
+              <tbody id="m_sales_table"></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">월간 달력</div>
+          <div class="calendar-wrap">
+            <div class="calendar" id="m_calendar_head"></div>
+            <div class="calendar" id="m_calendar" style="margin-top:4px;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /shell -->
+
+<!-- ===== 슬라이드 오버: 매입 등록 ===== -->
+<div class="so-backdrop" id="so_backdrop" onclick="closeSlide()"></div>
+
+<aside class="slideover" id="so_purchase" role="dialog" aria-modal="true" aria-labelledby="so_p_title">
+  <div class="so-head">
+    <div><h2 id="so_p_title">매입 등록</h2><p>입고한 기기 정보를 입력해주세요.</p></div>
+    <button type="button" class="so-x" onclick="closeSlide()" aria-label="닫기">×</button>
+  </div>
+  <div class="so-body">
+    <div class="form-grid">
+      <div class="field">
+        <label>매입일</label>
+        <input type="date" id="p_date">
+      </div>
+      <div class="field">
+        <label>매입가 (원)</label>
+        <input type="text" class="mono-in num" id="p_cost" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this)">
+      </div>
+      <div class="field full">
+        <label>모델명</label>
+        <input type="text" id="p_model" placeholder="예: 아이폰 15 Pro 256GB">
+      </div>
+      <div class="field full">
+        <label>IMEI <span class="imei-help" id="p_imei_help"></span></label>
+        <input type="text" class="mono-in" id="p_imei" placeholder="IMEI 번호 입력" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>색상</label>
+        <input type="text" id="p_color" placeholder="예: 블랙">
+      </div>
+      <div class="field">
+        <label>등급</label>
+        <select id="p_grade">
+          <option value="S">S (신품급)</option>
+          <option value="A">A (상급)</option>
+          <option value="B">B (중급)</option>
+          <option value="C">C (하급)</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>특이사항</label>
+        <input type="text" id="p_note" placeholder="예: 액정 미세스크래치, 배터리 92%">
+      </div>
+    </div>
+  </div>
+  <div class="so-foot">
+    <div class="hint" id="p_hint"></div>
+    <div class="so-actions">
+      <button class="btn-ghost" id="p_cancel_btn" style="display:none;" onclick="cancelPurchaseEdit()">취소</button>
+      <button class="btn btn-main" id="p_submit_btn" onclick="submitPurchase()">매입 등록</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ===== 슬라이드 오버: 판매 등록 ===== -->
+<aside class="slideover" id="so_sales" role="dialog" aria-modal="true" aria-labelledby="so_s_title">
+  <div class="so-head">
+    <div><h2 id="so_s_title">판매 등록</h2><p>IMEI를 입력하면 매입 정보가 자동으로 채워집니다.</p></div>
+    <button type="button" class="so-x" onclick="closeSlide()" aria-label="닫기">×</button>
+  </div>
+  <div class="so-body">
+    <div class="form-grid">
+      <div class="field">
+        <label>판매일</label>
+        <input type="date" id="s_date">
+      </div>
+      <div class="field">
+        <label>판매가 (원)</label>
+        <input type="text" class="mono-in num" id="s_price" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this); calcMargin();">
+      </div>
+      <div class="field full">
+        <label>IMEI 입력</label>
+        <input type="text" class="mono-in" id="s_imei" list="s_imei_list" placeholder="재고 IMEI 입력 또는 선택" oninput="lookupImei()">
+        <datalist id="s_imei_list"></datalist>
+      </div>
+      <div class="field full">
+        <label>모델명</label>
+        <input type="text" id="s_model" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>색상</label>
+        <input type="text" id="s_color" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>등급</label>
+        <input type="text" id="s_grade" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>매입가 (원)</label>
+        <input type="text" class="mono-in num" id="s_cost" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>마진</label>
+        <input type="text" class="mono-in num" id="s_margin" readonly placeholder="0">
+      </div>
+      <div class="field full">
+        <label>특이사항</label>
+        <input type="text" id="s_note" placeholder="예: 당일 직거래, 택배 발송">
+      </div>
+    </div>
+  </div>
+  <div class="so-foot">
+    <div class="hint" id="s_hint"></div>
+    <div class="so-actions">
+      <button class="btn-ghost" id="s_cancel_btn" style="display:none;" onclick="cancelSalesEdit()">취소</button>
+      <button class="btn btn-main" id="s_submit_btn" onclick="submitSale()">판매 등록</button>
+    </div>
+  </div>
+</aside>
+
+<div class="toast-wrap" id="toast_wrap" aria-live="polite"></div>
+</div><!-- /app -->
+
+<!-- 판매목록 IMEI 더블클릭 시 뜨는 매입정보 팝업 -->
+<div class="pm-backdrop" id="pm_backdrop">
+  <div class="pm-card" role="dialog" aria-modal="true" aria-labelledby="pm_title">
+    <div class="pm-head">
+      <span id="pm_title">매입 정보</span>
+      <button type="button" class="pm-x" onclick="closePurchaseModal()" aria-label="닫기">×</button>
+    </div>
+    <div class="pm-body">
+      <div class="pm-grid">
+        <div class="field">
+          <label>매입일</label>
+          <input type="date" id="pm_date">
+        </div>
+        <div class="field">
+          <label>매입가 (원)</label>
+          <input type="text" id="pm_cost" inputmode="numeric" oninput="formatMoneyInput(this); updatePmSaleInfo()">
+        </div>
+        <div class="field full">
+          <label>모델명</label>
+          <input type="text" id="pm_model">
+        </div>
+        <div class="field full">
+          <label>IMEI</label>
+          <input type="text" id="pm_imei" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>색상</label>
+          <input type="text" id="pm_color">
+        </div>
+        <div class="field">
+          <label>등급</label>
+          <select id="pm_grade">
+            <option value="S">S (신품급)</option>
+            <option value="A">A (상급)</option>
+            <option value="B">B (중급)</option>
+            <option value="C">C (하급)</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>특이사항 (매입 시)</label>
+          <input type="text" id="pm_note">
+        </div>
+      </div>
+      <div class="pm-sale" id="pm_sale_info"></div>
+    </div>
+    <div class="pm-foot">
+      <span class="pm-hint" id="pm_hint"></span>
+      <button type="button" class="btn-ghost" onclick="closePurchaseModal()">닫기</button>
+      <button type="button" class="btn btn-main" id="pm_save_btn" onclick="savePurchaseModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Firebase (compat SDK) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+<script>
+/* ================================================================
+   ▼▼▼ 파이어베이스 설정 — 이 부분만 바꾸면 됩니다! ▼▼▼
+
+   「파이어베이스 설치가이드」 6단계에서 복사한 firebaseConfig 의
+   따옴표 안 값들을 아래에 그대로 붙여넣으세요.
+   (복사한 내용 전체를 아래 const FIREBASE_CONFIG = { ... };
+    모양에 맞춰 통째로 바꿔치기해도 됩니다)
+================================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDEOtMae8Yxi0pD9Mv-sA498fT6Smvr72A",
+  authDomain: "aion2-55923.firebaseapp.com",
+  projectId: "aion2-55923",
+  storageBucket: "aion2-55923.firebasestorage.app",
+  messagingSenderId: "847980602515",
+  appId: "1:847980602515:web:5ccf664df249b4f88e1966"
+};
+/* ▲▲▲ 여기까지 — 아래 코드는 건드릴 필요 없습니다 ▲▲▲ */
+
+
+/* ============ 공통 유틸 ============ */
+function $(id) { return document.getElementById(id); }
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = (str == null ? '' : String(str));
+  return div.innerHTML;
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function comma(n) { return Number(n || 0).toLocaleString(); }
+// "1,234,000" / "1234000" → 1234000
+function parseMoney(v) {
+  const digits = String(v == null ? '' : v).replace(/[^\d]/g, '');
+  return digits ? Number(digits) : 0;
+}
+// 금액 입력칸에 자동으로 콤마를 찍어줌
+function formatMoneyInput(el) {
+  const digits = el.value.replace(/[^\d]/g, '');
+  el.value = digits ? Number(digits).toLocaleString() : '';
+}
+function gradeBadge(g) { return `<span class="badge badge-grade-${escapeHtml(g)}">${escapeHtml(g)}</span>`; }
+
+function renderHeaderDate() {
+  const d = new Date();
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  $('header_date').textContent =
+    `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+}
+
+/* ============ 전역 상태 ============ */
+let auth = null, db = null, uid = null;
+let purchases = [];   // {id, date, model, imei, color, grade, cost, note, status, createdAt}
+let sales = [];       // {id, purchaseId, date, model, imei, color, grade, cost, price, margin, createdAt}
+let unsubP = null, unsubS = null;
+let pEditId = null;                       // 수정 중인 매입 문서 id
+let sEditId = null, sEditPurchaseId = null; // 수정 중인 판매 문서 id / 원래 연결된 매입 id
+let sMatched = null;                      // 판매 등록 폼에서 IMEI로 찾은 매입 건
+let pFilter = '', sFilter = '';
+let busy = false;                         // 중복 저장 방지
+let sessionTouchTimer = null;             // 자동 로그아웃(5분) 체크용 타이머
+
+function isConfigured() {
+  return FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey.indexOf('여기에') === -1;
+}
+function pcol() { return db.collection('users').doc(uid).collection('purchases'); }
+function scol() { return db.collection('users').doc(uid).collection('sales'); }
+
+/* ============ 저장 상태 표시 ============ */
+function setStatus(text, good) {
+  const el = $('save_status');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = good ? '#8FE3B3' : '#F4C88F';
+}
+function nowHM() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+async function saveWrite(promise) {
+  setStatus('● 저장 중...', true);
+  try {
+    await promise;
+    setStatus('● 자동 저장됨 ' + nowHM(), true);
+    return true;
+  } catch (e) {
+    console.error(e);
+    setStatus('● 저장 실패', false);
+    alert('저장에 실패했습니다.\n인터넷 연결을 확인해주세요.\n\n(' + (e && e.message ? e.message : e) + ')');
+    return false;
+  }
+}
+window.addEventListener('offline', () => setStatus('● 오프라인 — 연결되면 자동 저장됩니다', false));
+window.addEventListener('online', () => setStatus('● 실시간 동기화 켜짐', true));
+
+/* ============ 로그인 / 로그아웃 ============ */
+const AUTH_ERROR_MSG = {
+  'auth/invalid-email': '이메일 형식이 올바르지 않습니다.',
+  'auth/user-disabled': '사용이 중지된 계정입니다.',
+  'auth/user-not-found': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/wrong-password': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/invalid-credential': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/invalid-login-credentials': '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'auth/too-many-requests': '시도가 너무 많았습니다. 잠시 후 다시 시도해주세요.',
+  'auth/network-request-failed': '인터넷 연결을 확인해주세요.'
+};
+
+/* ============ 자동 로그아웃 (창을 닫고 5분 넘게 지나면 로그아웃) ============ */
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5분
+function touchSession() {
+  try { localStorage.setItem('aionio_last_active', String(Date.now())); } catch (e) { /* 무시 */ }
+}
+function clearSessionTimestamp() {
+  try { localStorage.removeItem('aionio_last_active'); } catch (e) { /* 무시 */ }
+}
+function isSessionExpired() {
+  try {
+    const last = Number(localStorage.getItem('aionio_last_active'));
+    if (!last) return false; // 기록이 없으면(예: 최초 로그인) 만료로 보지 않음
+    return (Date.now() - last) > SESSION_TIMEOUT_MS;
+  } catch (e) { return false; }
+}
+
+async function doLogin() {
+  const email = $('login_email').value.trim();
+  const pw = $('login_pw').value;
+  const err = $('login_error');
+  const btn = $('login_btn');
+  if (!email || !pw) { err.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
+  try {
+    if ($('login_remember').checked) {
+      localStorage.setItem('aionio_saved_email', email);
+    } else {
+      localStorage.removeItem('aionio_saved_email');
+    }
+  } catch (e) { /* 저장 실패해도 로그인은 계속 진행 */ }
+  err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = '로그인 중...';
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+    // 이후 처리는 onAuthStateChanged 에서
+  } catch (e) {
+    err.textContent = AUTH_ERROR_MSG[e.code] || ('로그인에 실패했습니다. (' + e.code + ')');
+    $('login_pw').value = '';
+    $('login_pw').focus();
+  }
+  btn.disabled = false;
+  btn.textContent = '로그인';
+}
+
+function doLogout() {
+  if (!confirm('로그아웃 하시겠습니까?')) return;
+  auth.signOut();
+}
+
+/* ============ 실시간 동기화 ============ */
+function sortByDate(arr) {
+  return arr.sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    const at = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : Infinity;
+    const bt = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : Infinity;
+    return at - bt;
+  });
+}
+
+function startListeners() {
+  stopListeners();
+  unsubP = pcol().onSnapshot(snap => {
+    purchases = sortByDate(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    renderPurchases();
+    renderMonthly();
+    refreshImeiList();
+    setStatus('● 실시간 동기화 켜짐', true);
+    if (!snap.metadata.fromCache) maybeOfferLegacyImport();
+  }, e => {
+    console.error(e);
+    if (e.code === 'permission-denied') {
+      setStatus('● 접근 권한 오류', false);
+      alert('데이터 접근 권한이 없습니다.\n설치가이드 4단계(보안 규칙)를 다시 확인해주세요.');
+    }
+  });
+  unsubS = scol().onSnapshot(snap => {
+    sales = sortByDate(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    renderSales();
+    renderMonthly();
+  }, e => console.error(e));
+}
+function stopListeners() {
+  if (unsubP) { unsubP(); unsubP = null; }
+  if (unsubS) { unsubS(); unsubS = null; }
+}
+
+/* ============ 탭 ============ */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  $('page-purchase').classList.toggle('active', name === 'purchase');
+  $('page-sales').classList.toggle('active', name === 'sales');
+  $('page-monthly').classList.toggle('active', name === 'monthly');
+  if (name === 'sales') refreshImeiList();
+  if (name === 'monthly') renderMonthly();
+}
+
+/* ============ 매입관리 ============ */
+function matchesFilter(item, keyword) {
+  if (!keyword) return true;
+  const k = keyword.toLowerCase();
+  return ['model', 'imei', 'color', 'note'].some(f =>
+    item[f] && String(item[f]).toLowerCase().includes(k));
+}
+function setPurchaseFilter(v) { pFilter = v.trim(); renderPurchases(); }
+function setSalesFilter(v) { sFilter = v.trim(); renderSales(); }
+
+function renderPurchases() {
+  const body = $('p_table_body');
+  body.innerHTML = '';
+  const list = purchases.filter(p => matchesFilter(p, pFilter));
+  if (list.length === 0) {
+    const msg = purchases.length === 0 ? '등록된 매입 내역이 없습니다.' : '검색 결과가 없습니다.';
+    body.innerHTML = `<tr class="empty-row"><td colspan="10">${msg}</td></tr>`;
+  } else {
+    list.forEach((p, i) => {
+      const tr = document.createElement('tr');
+      if (p.id === pEditId) tr.classList.add('editing-row');
+      const badge = p.status === '재고'
+        ? '<span class="badge badge-stock">재고</span>'
+        : '<span class="badge badge-sold">판매완료</span>';
+      const delBtn = p.status === '재고'
+        ? `<button class="btn-del" onclick="removePurchase('${p.id}')">삭제</button>`
+        : '-';
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${escapeHtml(p.date)}</td>
+        <td style="text-align:left;">${escapeHtml(p.model)}</td>
+        <td>${escapeHtml(p.imei)}</td>
+        <td>${escapeHtml(p.color || '-')}</td>
+        <td>${gradeBadge(p.grade)}</td>
+        <td style="text-align:right;">${comma(p.cost)}</td>
+        <td style="text-align:left;">${escapeHtml(p.note || '-')}</td>
+        <td>${badge}</td>
+        <td><button class="btn-edit" onclick="editPurchaseRow('${p.id}')">수정</button>${delBtn}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+  updateStatusBar();
+}
+
+async function submitPurchase() {
+  if (busy) return;
+  const hint = $('p_hint');
+  const date = $('p_date').value || todayStr();
+  const model = $('p_model').value.trim();
+  const imei = $('p_imei').value.trim();
+  const color = $('p_color').value.trim();
+  const grade = $('p_grade').value;
+  const cost = parseMoney($('p_cost').value);
+  const note = $('p_note').value.trim();
+
+  if (!model || !imei) {
+    hint.textContent = '모델명과 IMEI는 필수 입력 항목입니다.';
+    hint.classList.remove('ok');
+    return;
+  }
+  // 같은 IMEI가 이미 "재고"로 있으면 중복 등록 차단
+  // (판매완료된 기기는 다시 매입할 수 있어야 하므로 허용 — 재매입)
+  if (purchases.some(p => p.imei === imei && p.id !== pEditId && p.status === '재고')) {
+    hint.textContent = '이미 재고에 등록된 IMEI입니다.';
+    hint.classList.remove('ok');
+    return;
+  }
+
+  busy = true;
+  let ok;
+  if (pEditId) {
+    // 수정: 연결된 판매 기록이 있으면 함께 갱신
+    const batch = db.batch();
+    batch.update(pcol().doc(pEditId), { date, model, imei, color, grade, cost, note });
+    const linked = sales.find(s => s.purchaseId === pEditId);
+    if (linked) {
+      batch.update(scol().doc(linked.id), {
+        model, imei, color, grade, cost,
+        margin: (Number(linked.price) || 0) - cost
+      });
+    }
+    ok = await saveWrite(batch.commit());
+    if (ok) {
+      pEditId = null;
+      hint.textContent = '매입 정보가 수정되었습니다.' + (linked ? ' (판매 기록도 함께 갱신)' : '');
+      hint.classList.add('ok');
+    }
+  } else {
+    ok = await saveWrite(pcol().add({
+      date, model, imei, color, grade, cost, note,
+      status: '재고',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }));
+    if (ok) {
+      hint.textContent = '매입이 등록되었습니다.';
+      hint.classList.add('ok');
+    }
+  }
+  busy = false;
+  if (ok) resetPurchaseForm();
+}
+
+function editPurchaseRow(id) {
+  const p = purchases.find(p => p.id === id);
+  if (!p) return;
+  pEditId = id;
+  $('p_date').value = p.date;
+  $('p_model').value = p.model;
+  $('p_imei').value = p.imei;
+  $('p_color').value = p.color || '';
+  $('p_grade').value = p.grade;
+  $('p_cost').value = comma(p.cost);
+  $('p_note').value = p.note || '';
+  $('p_submit_btn').textContent = '수정 완료';
+  $('p_cancel_btn').style.display = 'inline-block';
+  const hint = $('p_hint');
+  hint.textContent = '매입 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
+  hint.classList.remove('ok');
+  renderPurchases();
+  $('p_model').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelPurchaseEdit() {
+  pEditId = null;
+  resetPurchaseForm();
+  $('p_hint').textContent = '수정이 취소되었습니다.';
+  $('p_hint').classList.remove('ok');
+  renderPurchases();
+}
+
+function resetPurchaseForm() {
+  $('p_model').value = '';
+  $('p_imei').value = '';
+  $('p_color').value = '';
+  $('p_grade').value = 'S';
+  $('p_cost').value = '';
+  $('p_note').value = '';
+  $('p_date').value = todayStr();
+  $('p_submit_btn').textContent = '매입 등록';
+  $('p_cancel_btn').style.display = 'none';
+}
+
+async function removePurchase(id) {
+  const p = purchases.find(p => p.id === id);
+  if (!p) return;
+  if (p.status !== '재고') {
+    alert('판매완료된 항목은 매입 목록에서 바로 삭제할 수 없습니다.\n판매관리에서 해당 판매를 먼저 취소해주세요.');
+    return;
+  }
+  if (!confirm(`[${p.model}]\n이 매입 건을 삭제하시겠습니까?`)) return;
+  if (pEditId === id) { pEditId = null; resetPurchaseForm(); }
+  await saveWrite(pcol().doc(id).delete());
+}
+
+/* ============ 판매관리 ============ */
+function renderSales() {
+  const body = $('s_table_body');
+  body.innerHTML = '';
+  const list = sales.filter(s => matchesFilter(s, sFilter));
+  if (list.length === 0) {
+    const msg = sales.length === 0 ? '등록된 판매 내역이 없습니다.' : '검색 결과가 없습니다.';
+    body.innerHTML = `<tr class="empty-row"><td colspan="12">${msg}</td></tr>`;
+  } else {
+    list.forEach((s, i) => {
+      const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
+      const marginRate = s.price > 0 ? ((s.margin / s.price) * 100).toFixed(1) : '0.0';
+      const tr = document.createElement('tr');
+      if (s.id === sEditId) tr.classList.add('editing-row');
+      tr.innerHTML = `
+        <td>${i + 1}</td>
+        <td>${escapeHtml(s.date)}</td>
+        <td style="text-align:left;">${escapeHtml(s.model)}</td>
+        <td class="imei-cell" title="더블클릭하면 매입 정보를 보고 수정할 수 있어요" ondblclick="openPurchaseModalFromSale('${s.id}')">${escapeHtml(s.imei)}</td>
+        <td>${escapeHtml(s.color || '-')}</td>
+        <td>${escapeHtml(s.grade || '-')}</td>
+        <td style="text-align:right;">${comma(s.cost)}</td>
+        <td style="text-align:right;">${comma(s.price)}</td>
+        <td class="${marginClass}">${comma(s.margin)}</td>
+        <td class="${marginClass}">${marginRate}%</td>
+        <td style="text-align:left;">${escapeHtml(s.note || '-')}</td>
+        <td><button class="btn-edit" onclick="editSaleRow('${s.id}')">수정</button><button class="btn-del" onclick="cancelSale('${s.id}')">취소</button></td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+  updateStatusBar();
+}
+
+function refreshImeiList() {
+  const datalist = $('s_imei_list');
+  if (!datalist) return;
+  datalist.innerHTML = '';
+  const candidates = purchases.filter(p =>
+    p.status === '재고' || (sEditId && p.id === sEditPurchaseId));
+  candidates.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.imei;
+    opt.label = `${p.model} (매입가 ${comma(p.cost)}원)`;
+    datalist.appendChild(opt);
+  });
+}
+
+function findSellable(imei) {
+  const t = imei.trim();
+  // 판매 수정 중이면 원래 연결돼 있던 기기를 우선 매칭
+  if (sEditId) {
+    const orig = purchases.find(p => p.id === sEditPurchaseId && p.imei === t);
+    if (orig) return orig;
+  }
+  return purchases.find(p => p.imei === t && p.status === '재고');
+}
+
+function lookupImei() {
+  const imei = $('s_imei').value;
+  const hint = $('s_hint');
+  if (!imei.trim()) {
+    $('s_model').value = ''; $('s_cost').value = '';
+    $('s_color').value = ''; $('s_grade').value = '';
+    sMatched = null;
+    hint.textContent = '';
+    calcMargin();
+    return;
+  }
+  const found = findSellable(imei);
+  if (found) {
+    $('s_model').value = found.model;
+    $('s_cost').value = comma(found.cost) + ' 원';
+    $('s_color').value = found.color || '-';
+    $('s_grade').value = found.grade;
+    sMatched = found;
+    hint.textContent = `일치하는 매입 내역을 찾았습니다: ${found.model}`;
+    hint.classList.add('ok');
+  } else {
+    $('s_model').value = ''; $('s_cost').value = '';
+    $('s_color').value = ''; $('s_grade').value = '';
+    sMatched = null;
+    hint.textContent = '재고에서 일치하는 IMEI를 찾을 수 없습니다.';
+    hint.classList.remove('ok');
+  }
+  calcMargin();
+}
+
+function calcMargin() {
+  const priceField = $('s_price');
+  const marginField = $('s_margin');
+  if (!sMatched || !priceField.value) {
+    marginField.value = '';
+    return;
+  }
+  marginField.value = comma(parseMoney(priceField.value) - sMatched.cost) + ' 원';
+}
+
+async function submitSale() {
+  if (busy) return;
+  const hint = $('s_hint');
+  const date = $('s_date').value || todayStr();
+  const price = parseMoney($('s_price').value);
+  const note = $('s_note').value.trim();
+  if (!sMatched) {
+    hint.textContent = '재고에 있는 IMEI를 먼저 입력해주세요.';
+    hint.classList.remove('ok');
+    return;
+  }
+  if (!price || price <= 0) {
+    hint.textContent = '판매가를 입력해주세요.';
+    hint.classList.remove('ok');
+    return;
+  }
+
+  busy = true;
+  const p = sMatched;
+  const saleData = {
+    purchaseId: p.id,
+    date,
+    model: p.model, imei: p.imei, color: p.color || '', grade: p.grade,
+    cost: p.cost, price, note,
+    margin: price - p.cost
+  };
+  const batch = db.batch();
+  let ok;
+  if (sEditId) {
+    // 판매 수정: 기기가 바뀌었으면 이전 기기는 재고로 복원
+    if (p.id !== sEditPurchaseId) {
+      batch.update(pcol().doc(sEditPurchaseId), { status: '재고' });
+      batch.update(pcol().doc(p.id), { status: '판매완료' });
+    }
+    batch.update(scol().doc(sEditId), saleData);
+    ok = await saveWrite(batch.commit());
+    if (ok) {
+      sEditId = null; sEditPurchaseId = null;
+      hint.textContent = '판매 정보가 수정되었습니다.';
+      hint.classList.add('ok');
+    }
+  } else {
+    const saleRef = scol().doc();
+    saleData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    batch.set(saleRef, saleData);
+    batch.update(pcol().doc(p.id), { status: '판매완료' });
+    ok = await saveWrite(batch.commit());
+    if (ok) {
+      hint.textContent = '판매가 등록되었습니다.';
+      hint.classList.add('ok');
+    }
+  }
+  busy = false;
+  if (ok) resetSalesForm();
+}
+
+function editSaleRow(id) {
+  const s = sales.find(s => s.id === id);
+  if (!s) return;
+  sEditId = id;
+  sEditPurchaseId = s.purchaseId;
+  refreshImeiList();
+  $('s_date').value = s.date;
+  $('s_imei').value = s.imei;
+  lookupImei();
+  $('s_price').value = comma(s.price);
+  calcMargin();
+  $('s_note').value = s.note || '';
+  $('s_submit_btn').textContent = '수정 완료';
+  $('s_cancel_btn').style.display = 'inline-block';
+  const hint = $('s_hint');
+  hint.textContent = '판매 정보를 수정 중입니다. 내용을 고친 뒤 "수정 완료"를 눌러주세요.';
+  hint.classList.remove('ok');
+  renderSales();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelSalesEdit() {
+  sEditId = null; sEditPurchaseId = null;
+  resetSalesForm();
+  $('s_hint').textContent = '수정이 취소되었습니다.';
+  $('s_hint').classList.remove('ok');
+  renderSales();
+}
+
+function resetSalesForm() {
+  $('s_imei').value = '';
+  $('s_model').value = '';
+  $('s_cost').value = '';
+  $('s_color').value = '';
+  $('s_grade').value = '';
+  $('s_price').value = '';
+  $('s_margin').value = '';
+  $('s_note').value = '';
+  $('s_date').value = todayStr();
+  $('s_submit_btn').textContent = '판매 등록';
+  $('s_cancel_btn').style.display = 'none';
+  sMatched = null;
+  refreshImeiList();
+}
+
+async function cancelSale(id) {
+  const s = sales.find(s => s.id === id);
+  if (!s) return;
+  if (!confirm(`[${s.model}]\n이 판매 건을 취소하시겠습니까?\n취소 시 해당 기기가 재고로 복원됩니다.`)) return;
+  if (sEditId === id) { sEditId = null; sEditPurchaseId = null; resetSalesForm(); }
+  const batch = db.batch();
+  batch.delete(scol().doc(id));
+  batch.update(pcol().doc(s.purchaseId), { status: '재고' });
+  await saveWrite(batch.commit());
+}
+
+/* ============ 월별현황 ============ */
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth(); // 0-indexed
+
+function monthlyShift(delta) {
+  viewMonth += delta;
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  renderMonthly();
+}
+function monthlyJump(value) {
+  if (!value) return;
+  const [y, m] = value.split('-').map(Number);
+  viewYear = y; viewMonth = m - 1;
+  renderMonthly();
+}
+function monthlyToday() {
+  const n = new Date();
+  viewYear = n.getFullYear(); viewMonth = n.getMonth();
+  renderMonthly();
+}
+function inViewMonth(dateStr) {
+  if (!dateStr) return false;
+  const [y, m] = dateStr.split('-').map(Number);
+  return y === viewYear && (m - 1) === viewMonth;
+}
+
+function renderMonthly() {
+  if (!document.getElementById('page-monthly').classList.contains('active')) {
+    // 탭이 안 보이면 라벨만 갱신해두고 무거운 렌더는 생략
+  }
+  $('m_month_label').textContent = `${viewYear}년 ${viewMonth + 1}월`;
+  $('m_month_input').value = viewYear + '-' + String(viewMonth + 1).padStart(2, '0');
+
+  const pIn = purchases.filter(p => inViewMonth(p.date));
+  const sIn = sales.filter(s => inViewMonth(s.date));
+
+  $('m_stat_pcount').textContent = pIn.length + '건';
+  $('m_stat_pcost').textContent = comma(pIn.reduce((sum, p) => sum + (Number(p.cost) || 0), 0)) + '원';
+  $('m_stat_scount').textContent = sIn.length + '건';
+  $('m_stat_margin').textContent = comma(sIn.reduce((sum, s) => sum + (Number(s.margin) || 0), 0)) + '원';
+
+  // 달력 머리글
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  $('m_calendar_head').innerHTML = days.map(d => `<div class="cal-head">${d}</div>`).join('');
+
+  // 달력 본체
+  const cal = $('m_calendar');
+  cal.innerHTML = '';
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const todayS = todayStr();
+  const buyByDay = {}, sellByDay = {};
+  pIn.forEach(p => { const d = Number(p.date.split('-')[2]); buyByDay[d] = (buyByDay[d] || 0) + 1; });
+  sIn.forEach(s => { const d = Number(s.date.split('-')[2]); sellByDay[d] = (sellByDay[d] || 0) + 1; });
+  let html = '';
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = viewYear + '-' + String(viewMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const isToday = dateStr === todayS;
+    let tags = '';
+    if (buyByDay[d]) tags += `<span class="cal-tag buy">매입 ${buyByDay[d]}</span>`;
+    if (sellByDay[d]) tags += `<span class="cal-tag sell">판매 ${sellByDay[d]}</span>`;
+    html += `<div class="cal-cell${isToday ? ' today' : ''}"><div class="daynum">${d}</div>${tags}</div>`;
+  }
+  cal.innerHTML = html;
+
+  // 이 달의 매입 내역
+  const pBody = $('m_purchase_table');
+  pBody.innerHTML = '';
+  if (pIn.length === 0) {
+    pBody.innerHTML = '<tr class="empty-row"><td colspan="8">이 달에 등록된 매입 내역이 없습니다.</td></tr>';
+  } else {
+    pIn.forEach((p, i) => {
+      const badge = p.status === '재고'
+        ? '<span class="badge badge-stock">재고</span>'
+        : '<span class="badge badge-sold">판매완료</span>';
+      pBody.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(p.date)}</td>
+          <td style="text-align:left;">${escapeHtml(p.model)}</td>
+          <td>${escapeHtml(p.imei)}</td>
+          <td>${escapeHtml(p.color || '-')}</td>
+          <td>${escapeHtml(p.grade)}</td>
+          <td style="text-align:right;">${comma(p.cost)}</td>
+          <td>${badge}</td>
+        </tr>`;
+    });
+  }
+
+  // 이 달의 판매 내역
+  const sBody = $('m_sales_table');
+  sBody.innerHTML = '';
+  if (sIn.length === 0) {
+    sBody.innerHTML = '<tr class="empty-row"><td colspan="7">이 달에 등록된 판매 내역이 없습니다.</td></tr>';
+  } else {
+    sIn.forEach((s, i) => {
+      const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
+      sBody.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(s.date)}</td>
+          <td style="text-align:left;">${escapeHtml(s.model)}</td>
+          <td>${escapeHtml(s.imei)}</td>
+          <td style="text-align:right;">${comma(s.cost)}</td>
+          <td style="text-align:right;">${comma(s.price)}</td>
+          <td class="${marginClass}">${comma(s.margin)}</td>
+        </tr>`;
+    });
+  }
+}
+
+/* ============ 하단 상태바 ============ */
+function updateStatusBar() {
+  const stock = purchases.filter(p => p.status === '재고').length;
+  const sold = purchases.filter(p => p.status === '판매완료').length;
+  $('stat_total').textContent = purchases.length;
+  $('stat_stock').textContent = stock;
+  $('stat_sold').textContent = sold;
+  $('stat_margin').textContent = comma(sales.reduce((sum, s) => sum + (Number(s.margin) || 0), 0));
+}
+
+/* ============ 엑셀(CSV) 내려받기 ============ */
+function csvCell(v) {
+  const s = (v == null ? '' : String(v));
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function csvImei(v) {
+  // 엑셀에서 IMEI가 지수표기(1.23E+14)로 깨지는 것 방지
+  return '="' + String(v == null ? '' : v).replace(/"/g, '') + '"';
+}
+function exportCsv() {
+  const rows = [];
+  rows.push(['[매입 목록]']);
+  rows.push(['매입일', '모델명', 'IMEI', '색상', '등급', '매입가', '특이사항', '상태']);
+  purchases.forEach(p => rows.push([
+    csvCell(p.date), csvCell(p.model), csvImei(p.imei), csvCell(p.color),
+    csvCell(p.grade), p.cost, csvCell(p.note), csvCell(p.status)
+  ]));
+  rows.push([]);
+  rows.push(['[판매 목록]']);
+  rows.push(['판매일', '모델명', 'IMEI', '색상', '등급', '매입가', '판매가', '마진', '특이사항']);
+  sales.forEach(s => rows.push([
+    csvCell(s.date), csvCell(s.model), csvImei(s.imei), csvCell(s.color),
+    csvCell(s.grade), s.cost, s.price, s.margin, csvCell(s.note)
+  ]));
+  const csv = '\ufeff' + rows.map(r => r.join(',')).join('\r\n');
+  // (위 문자열 맨 앞은 한글 엑셀 호환을 위한 BOM)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  a.href = url;
+  a.download = `aionio_재고관리_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============ 예전 데이터 가져오기 ============ */
+// 이전 버전(로컬 저장 방식)의 백업 JSON 또는 브라우저에 남은 데이터를
+// 클라우드(Firestore)로 옮깁니다. IMEI가 같은 건은 건너뜁니다.
+async function importLegacyData(data, sourceLabel) {
+  const oldPurchases = Array.isArray(data.purchases) ? data.purchases : [];
+  const oldSales = Array.isArray(data.sales) ? data.sales : [];
+  if (oldPurchases.length === 0 && oldSales.length === 0) {
+    alert('가져올 데이터가 없습니다.');
+    return;
+  }
+  const existingImeis = new Set(purchases.map(p => String(p.imei)));
+  const idMap = {};
+  let pCount = 0, sCount = 0, skipped = 0;
+  const writes = [];
+  const stamp = firebase.firestore.FieldValue.serverTimestamp();
+
+  oldPurchases.forEach(op => {
+    const imei = String(op.imei == null ? '' : op.imei).trim();
+    if (!imei || existingImeis.has(imei)) { skipped++; return; }
+    existingImeis.add(imei);
+    const ref = pcol().doc();
+    idMap[op.id] = ref.id;
+    pCount++;
+    writes.push({ ref, data: {
+      date: op.date || todayStr(),
+      model: String(op.model || ''), imei,
+      color: String(op.color || ''), grade: op.grade || 'A',
+      cost: Number(op.cost) || 0, note: String(op.note || ''),
+      status: op.status === '판매완료' ? '판매완료' : '재고',
+      createdAt: stamp
+    }});
+  });
+  oldSales.forEach(os => {
+    const newPid = idMap[os.purchaseId];
+    if (!newPid) return; // 연결된 매입이 안 옮겨졌으면(중복 등) 판매도 건너뜀
+    const ref = scol().doc();
+    sCount++;
+    const cost = Number(os.cost) || 0, price = Number(os.price) || 0;
+    writes.push({ ref, data: {
+      purchaseId: newPid,
+      date: os.date || todayStr(),
+      model: String(os.model || ''), imei: String(os.imei || ''),
+      color: String(os.color || ''), grade: os.grade || '',
+      cost, price, note: String(os.note || ''),
+      margin: (os.margin != null && !isNaN(Number(os.margin))) ? Number(os.margin) : price - cost,
+      createdAt: stamp
+    }});
+  });
+
+  if (writes.length === 0) {
+    alert('모든 데이터가 이미 등록되어 있어 가져올 항목이 없습니다.');
+    return;
+  }
+  setStatus('● 데이터 가져오는 중...', true);
+  try {
+    for (let i = 0; i < writes.length; i += 400) {
+      const batch = db.batch();
+      writes.slice(i, i + 400).forEach(w => batch.set(w.ref, w.data));
+      await batch.commit();
+    }
+    alert(`가져오기 완료! (${sourceLabel})\n\n매입 ${pCount}건, 판매 ${sCount}건을 옮겼습니다.` +
+      (skipped ? `\n이미 등록된 IMEI ${skipped}건은 건너뛰었습니다.` : ''));
+    setStatus('● 자동 저장됨 ' + nowHM(), true);
+  } catch (e) {
+    console.error(e);
+    setStatus('● 가져오기 실패', false);
+    alert('데이터 가져오기에 실패했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해주세요.\n\n(' + e.message + ')');
+  }
+}
+
+function handleLegacyFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!confirm('예전 백업 파일의 데이터를 클라우드에 추가합니다.\n(같은 IMEI는 중복 등록되지 않습니다)\n계속하시겠습니까?')) {
+        event.target.value = '';
+        return;
+      }
+      importLegacyData(data, '백업 파일');
+    } catch (err) {
+      alert('백업 파일을 읽을 수 없습니다. 올바른 백업(.json) 파일인지 확인해주세요.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// 같은 주소(깃허브 페이지)에서 예전 버전을 쓰다가 새 버전으로 바꾼 경우,
+// 브라우저에 남아있는 데이터를 발견하면 한 번만 옮기기를 제안합니다.
+let legacyChecked = false;
+function maybeOfferLegacyImport() {
+  if (legacyChecked) return;
+  legacyChecked = true;
+  let raw = null;
+  try { raw = localStorage.getItem('inventory_data'); } catch (e) { return; }
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    const n = (data.purchases || []).length;
+    const m = (data.sales || []).length;
+    if (!n && !m) return;
+    if (confirm(`이 브라우저에 예전 버전 데이터가 남아 있습니다.\n(매입 ${n}건, 판매 ${m}건)\n\n클라우드로 옮길까요?\n(같은 IMEI는 중복 등록되지 않습니다)`)) {
+      importLegacyData(data, '이 브라우저의 예전 데이터');
+    }
+  } catch (e) { /* 무시 */ }
+}
+
+/* ============ 초기화 ============ */
+function showScreen(which) {
+  $('setup-screen').classList.toggle('show', which === 'setup');
+  $('login-screen').classList.toggle('show', which === 'login');
+  $('app').style.display = which === 'app' ? 'block' : 'none';
+}
+
+(function initApp() {
+  renderHeaderDate();
+  $('p_date').value = todayStr();
+  $('s_date').value = todayStr();
+
+  // 저장된 아이디(이메일)가 있으면 로그인 화면에 미리 채워넣기
+  try {
+    const savedEmail = localStorage.getItem('aionio_saved_email');
+    if (savedEmail) {
+      $('login_email').value = savedEmail;
+      $('login_remember').checked = true;
+    }
+  } catch (e) { /* 무시 */ }
+
+  // 어플처럼 설치·오프라인 실행되도록 서비스워커 등록 (웹 주소로 열었을 때만)
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(function (reg) {
+      reg.update(); // 열 때마다 sw.js 새 버전 확인
+      setInterval(function () { reg.update(); }, 60 * 1000); // 켜둔 채로도 1분마다 확인
+    }).catch(function () { /* 실패해도 앱 동작에는 지장 없음 */ });
+    // 새 서비스워커가 적용되면 자동으로 한 번 새로고침해서 최신 화면으로 교체
+    var hadController = !!navigator.serviceWorker.controller;
+    var reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloaded) { hadController = true; return; }
+      reloaded = true;
+      location.reload();
+    });
+  }
+
+  if (!isConfigured()) {
+    showScreen('setup');
+    return;
+  }
+
+  // 파이어베이스 SDK 자체가 로드되지 않은 경우 (인터넷 문제 등)
+  if (typeof firebase === 'undefined') {
+    showScreen('setup');
+    const card = document.querySelector('#setup-screen .login-card');
+    card.innerHTML = '<div class="login-accent"></div><div class="login-mark">a</div>' +
+      '<h1>서버 연결 실패</h1>' +
+      '<div class="login-sub">인터넷 연결을 확인한 뒤 새로고침(F5) 해주세요.</div>' +
+      '<div class="setup-note" style="margin-bottom:10px;">와이파이/데이터가 정상인데도 계속 이 화면이 보이면<br>잠시 후 다시 시도해주세요.</div>';
+    return;
+  }
+
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  } catch (e) {
+    showScreen('setup');
+    alert('파이어베이스 설정값이 올바르지 않습니다.\n설치가이드 6단계를 다시 확인해주세요.\n\n(' + e.message + ')');
+    return;
+  }
+  auth = firebase.auth();
+  db = firebase.firestore();
+  // 오프라인에서도 보고 입력할 수 있게 (연결되면 자동 동기화)
+  db.enablePersistence({ synchronizeTabs: true }).catch(function () { /* 미지원 브라우저는 무시 */ });
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      // 창을 닫아둔 지 5분이 넘었으면 자동 로그아웃 (신호는 아래 else 분기에서 처리됨)
+      if (isSessionExpired()) {
+        clearSessionTimestamp();
+        auth.signOut();
+        return;
+      }
+      uid = user.uid;
+      showScreen('app');
+      setStatus('● 연결 중...', true);
+      startListeners();
+      touchSession();
+      if (sessionTouchTimer) clearInterval(sessionTouchTimer);
+      sessionTouchTimer = setInterval(touchSession, 20000); // 앱이 열려있는 동안 계속 "활동 중"으로 갱신
+    } else {
+      uid = null;
+      stopListeners();
+      if (sessionTouchTimer) { clearInterval(sessionTouchTimer); sessionTouchTimer = null; }
+      clearSessionTimestamp();
+      purchases = []; sales = [];
+      pEditId = null; sEditId = null; sEditPurchaseId = null; sMatched = null;
+      showScreen('login');
+      $('login_pw').value = '';
+      setTimeout(() => $('login_email').focus(), 100);
+    }
+  });
+})();
+</script>
+<script>
+  /* 월 필터 상태 ('ALL' = 전체) */
+  let pMonthFilter = 'ALL';
+  let sMonthFilter = 'ALL';
+
+  function getMonthKey(dateStr) {
+    return dateStr ? String(dateStr).slice(0, 7) : ''; // 'YYYY-MM'
+  }
+  function monthKeyLabel(key) {
+    const parts = key.split('-');
+    const y = parts[0], m = Number(parts[1]);
+    return y + '년 ' + m + '월';
+  }
+  function setPurchaseMonthFilter(key) { pMonthFilter = key; renderPurchases(); }
+  function setSalesMonthFilter(key) { sMonthFilter = key; renderSales(); }
+
+  function renderMonthFilterButtons(containerId, dataArr, currentFilter, handlerName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const months = Array.from(new Set(dataArr.map(item => getMonthKey(item.date)).filter(Boolean))).sort();
+    let html = '<button type="button" class="month-filter-btn' + (currentFilter === 'ALL' ? ' active' : '') +
+      '" onclick="' + handlerName + '(\'ALL\')">전체</button>';
+    months.forEach(function (m) {
+      html += '<button type="button" class="month-filter-btn' + (currentFilter === m ? ' active' : '') +
+        '" onclick="' + handlerName + '(\'' + m + '\')">' + monthKeyLabel(m) + '</button>';
+    });
+    container.innerHTML = html;
+  }
+
+  /* 매입 목록 렌더링 — 검색 필터 + 월 필터를 함께 적용 (기존 renderPurchases 를 대체) */
+  function renderPurchases() {
+    renderMonthFilterButtons('p_month_filter', purchases, pMonthFilter, 'setPurchaseMonthFilter');
+    const body = $('p_table_body');
+    body.innerHTML = '';
+    const list = purchases.filter(function (p) {
+      return matchesFilter(p, pFilter) && (pMonthFilter === 'ALL' || getMonthKey(p.date) === pMonthFilter);
+    });
+    if (list.length === 0) {
+      const msg = purchases.length === 0 ? '등록된 매입 내역이 없습니다.' : '해당 조건의 매입 내역이 없습니다.';
+      body.innerHTML = '<tr class="empty-row"><td colspan="10">' + msg + '</td></tr>';
+    } else {
+      list.forEach(function (p, i) {
+        const tr = document.createElement('tr');
+        if (p.id === pEditId) tr.classList.add('editing-row');
+        const badge = p.status === '재고'
+          ? '<span class="badge badge-stock">재고</span>'
+          : '<span class="badge badge-sold">판매완료</span>';
+        const delBtn = p.status === '재고'
+          ? '<button class="btn-del" onclick="removePurchase(\'' + p.id + '\')">삭제</button>'
+          : '-';
+        tr.innerHTML =
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escapeHtml(p.date) + '</td>' +
+          '<td style="text-align:left;">' + escapeHtml(p.model) + '</td>' +
+          '<td>' + escapeHtml(p.imei) + '</td>' +
+          '<td>' + escapeHtml(p.color || '-') + '</td>' +
+          '<td>' + gradeBadge(p.grade) + '</td>' +
+          '<td style="text-align:right;">' + comma(p.cost) + '</td>' +
+          '<td style="text-align:left;">' + escapeHtml(p.note || '-') + '</td>' +
+          '<td>' + badge + '</td>' +
+          '<td><button class="btn-edit" onclick="editPurchaseRow(\'' + p.id + '\')">수정</button>' + delBtn + '</td>';
+        body.appendChild(tr);
+      });
+    }
+    updateStatusBar();
+  }
+
+  /* 판매 목록 렌더링 — 검색 필터 + 월 필터를 함께 적용 (기존 renderSales 를 대체) */
+  function renderSales() {
+    renderMonthFilterButtons('s_month_filter', sales, sMonthFilter, 'setSalesMonthFilter');
+    const body = $('s_table_body');
+    body.innerHTML = '';
+    const list = sales.filter(function (s) {
+      return matchesFilter(s, sFilter) && (sMonthFilter === 'ALL' || getMonthKey(s.date) === sMonthFilter);
+    });
+    if (list.length === 0) {
+      const msg = sales.length === 0 ? '등록된 판매 내역이 없습니다.' : '해당 조건의 판매 내역이 없습니다.';
+      body.innerHTML = '<tr class="empty-row"><td colspan="12">' + msg + '</td></tr>';
+    } else {
+      list.forEach(function (s, i) {
+        const marginClass = s.margin >= 0 ? 'margin-pos' : 'margin-neg';
+        const marginRate = s.price > 0 ? ((s.margin / s.price) * 100).toFixed(1) : '0.0';
+        const tr = document.createElement('tr');
+        if (s.id === sEditId) tr.classList.add('editing-row');
+        tr.innerHTML =
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escapeHtml(s.date) + '</td>' +
+          '<td style="text-align:left;">' + escapeHtml(s.model) + '</td>' +
+          '<td class="imei-cell" title="더블클릭하면 매입 정보를 보고 수정할 수 있어요" ondblclick="openPurchaseModalFromSale(\'' + s.id + '\')">' + escapeHtml(s.imei) + '</td>' +
+          '<td>' + escapeHtml(s.color || '-') + '</td>' +
+          '<td>' + escapeHtml(s.grade || '-') + '</td>' +
+          '<td style="text-align:right;">' + comma(s.cost) + '</td>' +
+          '<td style="text-align:right;">' + comma(s.price) + '</td>' +
+          '<td class="' + marginClass + '">' + comma(s.margin) + '</td>' +
+          '<td class="' + marginClass + '">' + marginRate + '%</td>' +
+          '<td style="text-align:left;">' + escapeHtml(s.note || '-') + '</td>' +
+          '<td><button class="btn-edit" onclick="editSaleRow(\'' + s.id + '\')">수정</button><button class="btn-del" onclick="cancelSale(\'' + s.id + '\')">취소</button></td>';
+        body.appendChild(tr);
+      });
+    }
+    updateStatusBar();
+  }
+
+  /* 데이터가 이미 로드되어 있는 상태(탭 전환 없이 이 스크립트가 뒤늦게 실행된 경우 등)라면
+     화면에 월 필터 버튼이 바로 보이도록 한 번 더 그려줌 */
+  if (typeof purchases !== 'undefined' && purchases.length) renderPurchases();
+  if (typeof sales !== 'undefined' && sales.length) renderSales();
+</script>
+
+<script>
+  /* ============ 판매목록 IMEI 더블클릭 → 매입정보 팝업 (추가) ============ */
+  let pmPurchaseId = null;   // 팝업에서 보고 있는 매입 문서 id
+
+  // 판매 건 → 연결된 매입 건 찾기 (purchaseId 우선, 없으면 IMEI로 보조 탐색)
+  function findPurchaseOfSale(s) {
+    let p = s.purchaseId ? purchases.find(function (x) { return x.id === s.purchaseId; }) : null;
+    if (!p) {
+      p = purchases.find(function (x) { return x.imei === s.imei && x.status === '판매완료'; }) ||
+          purchases.find(function (x) { return x.imei === s.imei; });
+    }
+    return p || null;
+  }
+
+  function openPurchaseModalFromSale(saleId) {
+    const s = sales.find(function (x) { return x.id === saleId; });
+    if (!s) return;
+    const p = findPurchaseOfSale(s);
+    if (!p) {
+      alert('이 판매 건과 연결된 매입 기록을 찾을 수 없습니다.');
+      return;
+    }
+    pmPurchaseId = p.id;
+    $('pm_title').textContent = '매입 정보 — ' + (p.model || '');
+    $('pm_date').value = p.date || '';
+    $('pm_model').value = p.model || '';
+    $('pm_imei').value = p.imei || '';
+    $('pm_color').value = p.color || '';
+    $('pm_grade').value = p.grade || 'S';
+    $('pm_cost').value = comma(p.cost);
+    $('pm_note').value = p.note || '';
+    $('pm_hint').textContent = '';
+    $('pm_hint').classList.remove('ok');
+    updatePmSaleInfo();
+    $('pm_backdrop').classList.add('show');
+    $('pm_model').focus();
+  }
+
+  // 매입가를 고치면 연결된 판매 건의 마진이 어떻게 바뀌는지 바로 보여줌
+  function updatePmSaleInfo() {
+    const box = $('pm_sale_info');
+    const linked = sales.filter(function (s) { return s.purchaseId === pmPurchaseId; });
+    if (!linked.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    const s = linked[0];
+    const price = Number(s.price) || 0;
+    const margin = price - parseMoney($('pm_cost').value);
+    const rate = price > 0 ? ((margin / price) * 100).toFixed(1) : '0.0';
+    box.textContent = '연결된 판매: ' + s.date + ' · 판매가 ' + comma(price) + '원 → 마진 ' +
+      comma(margin) + '원 (' + rate + '%)';
+  }
+
+  function closePurchaseModal() {
+    $('pm_backdrop').classList.remove('show');
+    pmPurchaseId = null;
+  }
+
+  async function savePurchaseModal() {
+    if (busy || !pmPurchaseId) return;
+    const hint = $('pm_hint');
+    hint.classList.remove('ok');
+    const date = $('pm_date').value || todayStr();
+    const model = $('pm_model').value.trim();
+    const imei = $('pm_imei').value.trim();
+    const color = $('pm_color').value.trim();
+    const grade = $('pm_grade').value;
+    const cost = parseMoney($('pm_cost').value);
+    const note = $('pm_note').value.trim();
+
+    if (!model || !imei) {
+      hint.textContent = '모델명과 IMEI는 필수 입력 항목입니다.';
+      return;
+    }
+    // 같은 IMEI가 다른 "재고"로 이미 있으면 차단 (기존 매입 수정과 같은 규칙)
+    if (purchases.some(function (p) { return p.imei === imei && p.id !== pmPurchaseId && p.status === '재고'; })) {
+      hint.textContent = '이미 재고에 등록된 IMEI입니다.';
+      return;
+    }
+
+    busy = true;
+    $('pm_save_btn').disabled = true;
+    // 매입 수정 + 연결된 판매 기록(모델·IMEI·색상·등급·매입가·마진)도 함께 갱신
+    const batch = db.batch();
+    batch.update(pcol().doc(pmPurchaseId), { date, model, imei, color, grade, cost, note });
+    const linked = sales.filter(function (s) { return s.purchaseId === pmPurchaseId; });
+    linked.forEach(function (s) {
+      batch.update(scol().doc(s.id), {
+        model, imei, color, grade, cost,
+        margin: (Number(s.price) || 0) - cost
+      });
+    });
+    const ok = await saveWrite(batch.commit());
+    busy = false;
+    $('pm_save_btn').disabled = false;
+    if (ok) closePurchaseModal();
+  }
+
+  // Esc 로 닫기 / 입력칸에서 Enter 로 저장
+  document.addEventListener('keydown', function (e) {
+    if (!$('pm_backdrop').classList.contains('show')) return;
+    if (e.key === 'Escape') { closePurchaseModal(); }
+    else if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') { savePurchaseModal(); }
+  });
+</script>
+<!-- ===== 리뉴얼 화면 연결용 추가 스크립트 (위 원본 스크립트는 수정하지 않음) ===== -->
+<script>
+/* ================================================================
+   리뉴얼 화면용 추가 스크립트
+   - 위쪽의 기존 스크립트(파이어베이스 연결, 저장/수정/삭제 로직)는 한 글자도 바꾸지 않았고,
+     이 파일은 그 함수들을 "감싸서" 새 화면(슬라이드 오버, 차트, 뱃지 등)과 연결만 합니다.
+================================================================ */
+(function () {
+  var $id = function (id) { return document.getElementById(id); };
+
+  /* ---------- 다크 모드 ---------- */
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function paintThemeBtn() {
+    var b = $id('theme_btn');
+    if (b) b.innerHTML = currentTheme() === 'dark' ? '☀&nbsp; 라이트 모드' : '◐&nbsp; 다크 모드';
+  }
+  $id('theme_btn').addEventListener('click', function () {
+    var t = currentTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('aionio_theme', t); } catch (e) { /* 무시 */ }
+    paintThemeBtn();
+  });
+  paintThemeBtn();
+
+  /* ---------- 더보기 메뉴 ---------- */
+  var toolsBtn = $id('tools_btn'), toolsMenu = $id('tools_menu');
+  function closeTools() {
+    toolsMenu.classList.remove('show');
+    toolsBtn.setAttribute('aria-expanded', 'false');
+  }
+  toolsBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = toolsMenu.classList.toggle('show');
+    toolsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  toolsMenu.addEventListener('click', function (e) { if (e.target.tagName === 'BUTTON') closeTools(); });
+  document.addEventListener('click', function (e) { if (!toolsMenu.contains(e.target)) closeTools(); });
+
+  /* ---------- 토스트 알림 ---------- */
+  window.toast = function (msg, type) {
+    var wrap = $id('toast_wrap');
+    var t = document.createElement('div');
+    t.className = 'toast' + (type === 'err' ? ' err' : '');
+    t.textContent = msg;
+    wrap.appendChild(t);
+    setTimeout(function () {
+      t.classList.add('out');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 260);
+    }, 2400);
+  };
+  var _saveWrite = saveWrite;
+  saveWrite = async function (promise) {
+    var ok = await _saveWrite(promise);
+    if (ok) toast('저장되었습니다');
+    return ok;
+  };
+
+  /* ---------- 슬라이드 오버 (등록/수정 패널) ---------- */
+  var SO = { purchase: 'so_purchase', sales: 'so_sales' };
+  var soOpen = null;
+
+  function hideSlide(kind) {
+    if (!kind) return;
+    $id(SO[kind]).classList.remove('show');
+    $id('so_backdrop').classList.remove('show');
+    if (soOpen === kind) soOpen = null;
+  }
+  window.openSlide = function (kind, keepHint) {
+    if (soOpen && soOpen !== kind) hideSlide(soOpen);
+    if (kind === 'purchase') {
+      $id('so_p_title').textContent = pEditId ? '매입 수정' : '매입 등록';
+      if (!keepHint) { var ph = $id('p_hint'); ph.textContent = ''; ph.classList.remove('ok'); }
+      updImei();
+    } else {
+      $id('so_s_title').textContent = sEditId ? '판매 수정' : '판매 등록';
+      refreshImeiList();
+      if (!keepHint) {
+        if ($id('s_imei').value.trim()) { lookupImei(); }
+        else { var sh = $id('s_hint'); sh.textContent = ''; sh.classList.remove('ok'); }
+      }
+    }
+    $id(SO[kind]).classList.add('show');
+    $id('so_backdrop').classList.add('show');
+    soOpen = kind;
+    setTimeout(function () {
+      if (soOpen !== kind) return;
+      var el = kind === 'purchase' ? $id('p_model') : $id('s_imei');
+      if (el) el.focus();
+    }, 340);
+  };
+  window.closeSlide = function () {
+    if (!soOpen) return;
+    var k = soOpen;
+    if (k === 'purchase' && pEditId) cancelPurchaseEdit();
+    else if (k === 'sales' && sEditId) cancelSalesEdit();
+    hideSlide(k);
+  };
+
+  // 기존 함수 감싸기: 저장이 성공하면 패널을 닫고, 수정 버튼을 누르면 패널을 엽니다.
+  var _submitPurchase = submitPurchase;
+  submitPurchase = async function () {
+    await _submitPurchase();
+    var h = $id('p_hint');
+    if (h.classList.contains('ok') && $id('p_model').value === '') { hideSlide('purchase'); updImei(); }
+  };
+  var _submitSale = submitSale;
+  submitSale = async function () {
+    await _submitSale();
+    var h = $id('s_hint');
+    if (h.classList.contains('ok') && $id('s_imei').value === '') hideSlide('sales');
+  };
+  var _editPurchaseRow = editPurchaseRow;
+  editPurchaseRow = function (id) {
+    _editPurchaseRow(id);
+    if (pEditId === id) openSlide('purchase', true);
+  };
+  var _editSaleRow = editSaleRow;
+  editSaleRow = function (id) {
+    _editSaleRow(id);
+    if (sEditId === id) openSlide('sales', true);
+  };
+  var _cancelPurchaseEdit = cancelPurchaseEdit;
+  cancelPurchaseEdit = function () { _cancelPurchaseEdit(); hideSlide('purchase'); updImei(); };
+  var _cancelSalesEdit = cancelSalesEdit;
+  cancelSalesEdit = function () { _cancelSalesEdit(); hideSlide('sales'); };
+
+  /* ---------- 사이드바 메뉴 ---------- */
+  var TITLES = { purchase: '매입 관리', sales: '판매 관리', monthly: '대시보드' };
+  var _switchTab = switchTab;
+  switchTab = function (name) {
+    if (soOpen) closeSlide();
+    _switchTab(name);
+    $id('page_title').textContent = TITLES[name] || '';
+    $id('page-monthly').scrollTop = 0;
+  };
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t.click(); }
+    });
+  });
+
+  /* ---------- 표: 뱃지 / 건수 ---------- */
+  function gradeBadges(tbodyId, col) {
+    var body = $id(tbodyId);
+    if (!body) return;
+    body.querySelectorAll('td:nth-child(' + col + ')').forEach(function (td) {
+      if (td.querySelector('.badge')) return;
+      var g = td.textContent.trim();
+      if (/^[SABC]$/.test(g)) td.innerHTML = '<span class="badge badge-grade-' + g + '">' + g + '</span>';
+    });
+  }
+  function countRows(tbodyId, outId) {
+    $id(outId).textContent = $id(tbodyId).querySelectorAll('tr:not(.empty-row)').length + '건';
+  }
+  var _renderPurchases = renderPurchases;
+  renderPurchases = function () {
+    _renderPurchases();
+    countRows('p_table_body', 'p_count');
+    $id('nav_stock').textContent = purchases.filter(function (p) { return p.status === '재고'; }).length;
+  };
+  var _renderSales = renderSales;
+  renderSales = function () {
+    _renderSales();
+    gradeBadges('s_table_body', 6);
+    countRows('s_table_body', 's_count');
+  };
+
+  /* ---------- 대시보드: 카드 + 차트 ---------- */
+  var W = 640, H = 240, L = 42, R = 12, T = 16, B = 28, PW = W - L - R, PH = H - T - B;
+
+  function monthDays() { return new Date(viewYear, viewMonth + 1, 0).getDate(); }
+  function fmtK(v) {
+    var a = Math.abs(v);
+    if (a >= 1e8) return (v / 1e8).toFixed(1) + '억';
+    if (a >= 1e4) return Math.round(v / 1e4).toLocaleString() + '만';
+    return String(Math.round(v));
+  }
+  // 눈금을 1·2·2.5·5 단위의 보기 좋은 숫자로 맞춤
+  function niceScale(lo, hi) {
+    var rough = (hi - lo) / 4;
+    var mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    var f = rough / mag;
+    var nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+    var step = nf * mag;
+    return { lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step, step: step };
+  }
+  function dayOf(dateStr) { return Number(String(dateStr).split('-')[2]) || 0; }
+
+  function drawDaily(pIn, sIn) {
+    var days = monthDays(), buy = [], sell = [], d, i, max = 0;
+    for (d = 0; d <= days; d++) { buy[d] = 0; sell[d] = 0; }
+    pIn.forEach(function (p) { var x = dayOf(p.date); if (x >= 1 && x <= days) buy[x]++; });
+    sIn.forEach(function (s) { var x = dayOf(s.date); if (x >= 1 && x <= days) sell[x]++; });
+    for (d = 1; d <= days; d++) max = Math.max(max, buy[d], sell[d]);
+    var ticks = 4;
+    var step = Math.max(1, Math.ceil(max / 4));
+    var top = ticks * step;
+    var yv = function (v) { return T + PH * (1 - v / top); };
+    var s = '<svg class="chart-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="일별 매입 판매 건수 막대 차트">';
+    for (i = 0; i <= ticks; i++) {
+      var v = i * step, y = yv(v);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--border)" stroke-width="1"' + (i === 0 ? '' : ' stroke-dasharray="3 4"') + '/>';
+      s += '<text x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="var(--text-faint)">' + v + '</text>';
+    }
+    var slot = PW / days, bw = Math.max(2, Math.min(9, slot * 0.36));
+    for (d = 1; d <= days; d++) {
+      var cx = L + (d - 1) * slot + slot / 2;
+      s += '<g class="dayg"><title>' + (viewMonth + 1) + '월 ' + d + '일 · 매입 ' + buy[d] + '건 · 판매 ' + sell[d] + '건</title>';
+      s += '<rect class="hit" x="' + (L + (d - 1) * slot) + '" y="' + T + '" width="' + slot + '" height="' + PH + '"/>';
+      if (buy[d]) s += '<rect x="' + (cx - bw - 0.5) + '" y="' + yv(buy[d]) + '" width="' + bw + '" height="' + (yv(0) - yv(buy[d])) + '" rx="2" fill="var(--accent)"/>';
+      if (sell[d]) s += '<rect x="' + (cx + 0.5) + '" y="' + yv(sell[d]) + '" width="' + bw + '" height="' + (yv(0) - yv(sell[d])) + '" rx="2" fill="var(--success)"/>';
+      s += '</g>';
+      if (d === 1 || d % 5 === 0) s += '<text x="' + cx + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="11" fill="var(--text-faint)">' + d + '일</text>';
+    }
+    if (max === 0) s += '<text class="chart-empty" x="' + (L + PW / 2) + '" y="' + (T + PH / 2) + '" text-anchor="middle">이 달에 등록된 매입 · 판매 내역이 없습니다</text>';
+    $id('chart_daily').innerHTML = s + '</svg>';
+  }
+
+  function drawCum(sIn, marginSum) {
+    var days = monthDays(), now = new Date(), d, i;
+    var isCur = viewYear === now.getFullYear() && viewMonth === now.getMonth();
+    var perDay = [];
+    for (d = 0; d <= days; d++) perDay[d] = 0;
+    var maxDay = 0;
+    sIn.forEach(function (s) {
+      var x = dayOf(s.date);
+      if (x >= 1 && x <= days) { perDay[x] += Number(s.margin) || 0; maxDay = Math.max(maxDay, x); }
+    });
+    var last = Math.max(isCur ? now.getDate() : days, maxDay);
+    var cum = [], run = 0, lo = 0, hi = 0;
+    for (d = 1; d <= last; d++) { run += perDay[d]; cum[d] = run; lo = Math.min(lo, run); hi = Math.max(hi, run); }
+    if (hi === lo) hi = lo + 4;
+    var ns = niceScale(lo, hi);
+    lo = ns.lo; hi = ns.hi;
+    var yv = function (v) { return T + PH * (1 - (v - lo) / (hi - lo)); };
+    var xv = function (day) { return days === 1 ? L + PW / 2 : L + (day - 1) / (days - 1) * PW; };
+    var s = '<svg class="chart-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="누적 마진 추이 선 차트">';
+    s += '<defs><linearGradient id="cumGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--success)" stop-opacity="0.3"/><stop offset="1" style="stop-color:var(--success)" stop-opacity="0.02"/></linearGradient></defs>';
+    for (i = 0; lo + ns.step * i <= hi + ns.step / 2; i++) {
+      var v = Math.round(lo + ns.step * i), y = yv(v);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--border)" stroke-width="1"' + (i === 0 ? '' : ' stroke-dasharray="3 4"') + '/>';
+      s += '<text x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="var(--text-faint)">' + fmtK(v) + '</text>';
+    }
+    var y0 = yv(Math.max(lo, 0));
+    if (lo < 0) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yv(0) + '" y2="' + yv(0) + '" stroke="var(--text-faint)" stroke-width="1"/>';
+    var pts = [];
+    for (d = 1; d <= last; d++) pts.push(xv(d).toFixed(1) + ',' + yv(cum[d]).toFixed(1));
+    if (maxDay > 0) {
+      s += '<path d="M' + xv(1).toFixed(1) + ',' + y0.toFixed(1) + ' L' + pts.join(' L') + ' L' + xv(last).toFixed(1) + ',' + y0.toFixed(1) + ' Z" fill="url(#cumGrad)"/>';
+      s += '<polyline fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '"/>';
+      for (d = 1; d <= last; d++) {
+        if (perDay[d] !== 0) {
+          s += '<circle cx="' + xv(d).toFixed(1) + '" cy="' + yv(cum[d]).toFixed(1) + '" r="3.8" fill="var(--surface)" stroke="var(--success)" stroke-width="2"><title>' +
+            (viewMonth + 1) + '월 ' + d + '일 · 누적 마진 ' + comma(cum[d]) + '원</title></circle>';
+        }
+      }
+    } else {
+      s += '<text class="chart-empty" x="' + (L + PW / 2) + '" y="' + (T + PH / 2) + '" text-anchor="middle">이 달의 판매 내역이 없습니다</text>';
+    }
+    for (d = 1; d <= days; d++) {
+      if (d === 1 || d % 5 === 0) s += '<text x="' + xv(d).toFixed(1) + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="11" fill="var(--text-faint)">' + d + '일</text>';
+    }
+    $id('chart_cum').innerHTML = s + '</svg>';
+    $id('chart_cum_total').textContent = '합계 ' + comma(marginSum) + '원';
+  }
+
+  function drawGrade(stock) {
+    var cnt = { S: 0, A: 0, B: 0, C: 0 };
+    stock.forEach(function (p) { if (cnt[p.grade] != null) cnt[p.grade]++; });
+    var max = Math.max(cnt.S, cnt.A, cnt.B, cnt.C, 1);
+    $id('chart_grade_sub').textContent = '현재 재고 ' + stock.length + '건';
+    if (!stock.length) { $id('chart_grade').innerHTML = '<div class="gd-empty">재고가 없습니다.</div>'; return; }
+    var colors = { S: 'var(--amber)', A: 'var(--success)', B: 'var(--accent)', C: 'var(--danger)' };
+    var html = '';
+    ['S', 'A', 'B', 'C'].forEach(function (g) {
+      html += '<div class="gd-row"><span class="badge badge-grade-' + g + '">' + g + '</span>' +
+        '<div class="gd-track"><div class="gd-fill" style="width:' + (cnt[g] / max * 100) + '%;background:' + colors[g] + '"></div></div>' +
+        '<b>' + cnt[g] + '건</b></div>';
+    });
+    $id('chart_grade').innerHTML = html;
+  }
+
+  function dashExtras() {
+    var stock = purchases.filter(function (p) { return p.status === '재고'; });
+    var stockVal = stock.reduce(function (a, p) { return a + (Number(p.cost) || 0); }, 0);
+    $id('m_stat_stock').textContent = stock.length + '건';
+    $id('m_stat_stockval').textContent = '재고 원가 합계 ' + comma(stockVal) + '원';
+    var pIn = purchases.filter(function (p) { return inViewMonth(p.date); });
+    var sIn = sales.filter(function (s) { return inViewMonth(s.date); });
+    var priceSum = sIn.reduce(function (a, s) { return a + (Number(s.price) || 0); }, 0);
+    var marginSum = sIn.reduce(function (a, s) { return a + (Number(s.margin) || 0); }, 0);
+    $id('m_stat_rate').textContent = priceSum > 0 ? (marginSum / priceSum * 100).toFixed(1) + '%' : '-';
+    drawDaily(pIn, sIn);
+    drawCum(sIn, marginSum);
+    drawGrade(stock);
+  }
+  var _renderMonthly = renderMonthly;
+  renderMonthly = function () {
+    _renderMonthly();
+    gradeBadges('m_purchase_table', 6);
+    dashExtras();
+  };
+
+  /* ---------- IMEI 입력 도우미 (자릿수 / 체크숫자 안내 — 저장을 막지는 않습니다) ---------- */
+  function luhn(d) {
+    var sum = 0, alt = false;
+    for (var i = d.length - 1; i >= 0; i--) {
+      var n = d.charCodeAt(i) - 48;
+      if (alt) { n *= 2; if (n > 9) n -= 9; }
+      sum += n; alt = !alt;
+    }
+    return sum % 10 === 0;
+  }
+  function updImei() {
+    var v = $id('p_imei').value.trim(), h = $id('p_imei_help');
+    if (!v) { h.textContent = ''; h.className = 'imei-help'; return; }
+    var d = v.replace(/\D/g, '');
+    if (d.length === 15) {
+      if (luhn(d)) { h.textContent = '15자리 ✓ 유효'; h.className = 'imei-help ok'; }
+      else { h.textContent = '15자리 · 체크숫자 불일치 (오타 확인)'; h.className = 'imei-help warn'; }
+    } else {
+      h.textContent = d.length + ' / 15자리'; h.className = 'imei-help';
+    }
+  }
+  $id('p_imei').addEventListener('input', updImei);
+
+  /* ---------- 키보드 ---------- */
+  function isTyping(el) {
+    return el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  }
+  document.addEventListener('keydown', function (e) {
+    var pmOpen = $id('pm_backdrop').classList.contains('show');
+    if (e.key === 'Escape') {
+      closeTools();
+      if (soOpen && !pmOpen) closeSlide();
+      return;
+    }
+    // 등록 패널 안에서 Enter → 다음 칸으로 이동, 마지막 칸이면 등록
+    if (e.key === 'Enter' && soOpen && !e.isComposing && e.target && e.target.tagName === 'INPUT') {
+      var panel = $id(SO[soOpen]);
+      if (!panel.contains(e.target)) return;
+      if (e.target.id === 's_imei' && !sMatched) return;
+      var list = [].slice.call(panel.querySelectorAll('.so-body input:not([readonly]), .so-body select'));
+      var idx = list.indexOf(e.target);
+      e.preventDefault();
+      if (idx >= 0 && idx < list.length - 1) list[idx + 1].focus();
+      else panel.querySelector('.so-actions .btn-main').click();
+      return;
+    }
+    // N 키 → 현재 화면의 등록 패널 열기
+    if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        !soOpen && !pmOpen && !isTyping(e.target) && $id('app').style.display === 'block') {
+      var act = document.querySelector('.tab.active');
+      if (act && act.dataset.tab === 'purchase') { e.preventDefault(); openSlide('purchase'); }
+      else if (act && act.dataset.tab === 'sales') { e.preventDefault(); openSlide('sales'); }
+    }
+  });
+})();
+
+</script>
+</body>
+</html>
