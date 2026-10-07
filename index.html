@@ -1195,7 +1195,7 @@ function isConfigured() {
 }
 // 모든 로그인 계정이 같은 데이터를 보도록, 데이터가 들어있는 계정의 UID를 여기에 지정
 // (비워두면 예전처럼 로그인한 계정 각자의 데이터를 사용)
-const SHARED_DATA_UID = 'euwEMdjc4xdU5u8phsAzFpqDg6U2';
+const SHARED_DATA_UID = 'cvCVj5coTrZmHKVHE10feR6kO7R2';
 function dataUid() { return SHARED_DATA_UID || uid; }
 function pcol() { return db.collection('users').doc(dataUid()).collection('purchases'); }
 function scol() { return db.collection('users').doc(dataUid()).collection('sales'); }
