@@ -14,10 +14,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="aionio">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script>
+  /* 저장된 화면 모드(다크/라이트)를 깜빡임 없이 먼저 적용 */
+  try { var __t = localStorage.getItem('aionio_theme'); if (__t) document.documentElement.setAttribute('data-theme', __t); } catch (e) {}
+</script>
 <style>
   :root {
     --navy: #1F2A44;
     --navy-2: #2B3A5E;
+    --navy-3: #161E33;
     --accent: #3E63DD;
     --accent-dark: #2F4EC0;
     --accent-light: #EEF2FF;
@@ -28,16 +33,45 @@
     --amber: #B8720B;
     --amber-light: #FCF1DC;
     --border: #E3E6EC;
-    --bg: #F5F6FA;
+    --bg: #F4F6FB;
     --surface: #FFFFFF;
+    --surface-2: #FAFBFD;
+    --row-alt: #FBFCFE;
+    --row-line: #EEF0F4;
+    --chip: #EEF0F4;
     --text: #1D2433;
     --text-mute: #6B7280;
     --text-faint: #9AA2B1;
-    --radius: 12px;
+    --radius: 14px;
     --shadow-sm: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
     --shadow-md: 0 6px 16px rgba(16,24,40,0.08);
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0E121B;
+    --surface: #171C27;
+    --surface-2: #1B2130;
+    --row-alt: #1A1F2B;
+    --row-line: #222939;
+    --chip: #262C3A;
+    --text: #E6E9F2;
+    --text-mute: #9AA3B5;
+    --text-faint: #6B7384;
+    --border: #2A3142;
+    --accent-light: #232C4F;
+    --accent-dark: #93A8F7;
+    --success: #34C089;
+    --success-light: #12312A;
+    --danger: #FF7468;
+    --danger-light: #3A1F20;
+    --amber: #E5A13A;
+    --amber-light: #3A2E14;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 6px 16px rgba(0,0,0,0.4);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
     font-family: "Pretendard", -apple-system, "Malgun Gothic", "맑은 고딕", sans-serif;
     background: var(--bg);
@@ -45,76 +79,132 @@
     font-size: 14px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    overflow: hidden;
   }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  /* ===== Header banner ===== */
-  .titlebar {
-    background: var(--navy);
-    background-image: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
-    color: #fff;
-    padding: calc(16px + env(safe-area-inset-top, 0px)) 28px 16px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
+  /* ===== App shell ===== */
+  #app { display: none; height: 100vh; height: 100dvh; }
+  .shell { display: flex; height: 100%; }
+
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: 232px; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-3) 100%);
+    color: #B7C2E3;
+    display: flex; flex-direction: column;
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px;
   }
-  .brand { display: flex; align-items: center; gap: 12px; }
+  .side-brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 22px 8px; }
   .brand-mark {
-    width: 36px; height: 36px; border-radius: 9px;
+    width: 38px; height: 38px; border-radius: 10px;
     background: linear-gradient(135deg, var(--accent) 0%, #7C93F0 100%);
     display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 16px; letter-spacing: -0.5px;
-    box-shadow: var(--shadow-sm); flex-shrink: 0;
+    font-weight: 800; font-size: 17px; color: #fff;
+    box-shadow: 0 4px 12px rgba(62,99,221,0.4); flex-shrink: 0;
   }
-  .brand-text h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
-  .brand-text .tagline { font-size: 11px; color: #A6B3D6; margin-top: 1px; font-weight: 500; }
-  .header-right { display: flex; align-items: center; gap: 14px; }
-  .header-date { font-size: 12px; color: #B7C2E3; font-weight: 500; }
-  .save-status { font-size: 11.5px; color: #8FE3B3; font-weight: 700; white-space: nowrap; }
-  .logout-btn {
-    background: rgba(255,255,255,0.08); color: #E7EAF3;
-    border: 1px solid rgba(255,255,255,0.18);
-    padding: 7px 14px; border-radius: 7px;
-    font-size: 12px; font-weight: 700; cursor: pointer;
-    font-family: inherit; transition: background 0.15s;
+  .brand-name { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.2; }
+  .brand-tag { font-size: 11px; color: #8F9CC4; font-weight: 500; }
+  .side-label {
+    font-size: 10.5px; letter-spacing: 0.9px; font-weight: 700;
+    color: #6F7DA6; padding: 4px 12px 8px 12px;
   }
-  .logout-btn:hover { background: rgba(255,255,255,0.16); }
-
-  .container { max-width: 1240px; margin: 0 auto; padding: 0 22px 32px 22px; }
-
-  /* ===== Tab strip ===== */
-  .tabstrip {
-    display: flex; gap: 6px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 11px; padding: 6px;
-    width: fit-content;
-    box-shadow: var(--shadow-sm);
-  }
+  .nav { display: flex; flex-direction: column; }
   .tab {
-    padding: 9px 18px; cursor: pointer;
-    font-weight: 700; font-size: 13.5px;
-    color: var(--text-mute); border-radius: 8px;
-    transition: background 0.15s, color 0.15s;
-    white-space: nowrap;
-    display: flex; align-items: center; justify-content: center; gap: 7px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; margin-bottom: 4px;
+    border-radius: 11px; cursor: pointer;
+    font-weight: 700; font-size: 13.5px; color: #B7C2E3;
+    position: relative; white-space: nowrap;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
-  .tab svg { width: 15px; height: 15px; flex-shrink: 0; }
-  .tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 6px rgba(62,99,221,0.35); }
-  .tab:hover:not(.active) { background: var(--accent-light); color: var(--accent-dark); }
-
-  .tab-toolbar {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 10px; margin: 20px 0 20px 0;
+  .tab svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .tab:hover:not(.active) { background: rgba(255,255,255,0.07); color: #fff; }
+  .tab.active { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(62,99,221,0.4); }
+  .tab .count {
+    margin-left: auto; font-size: 11px; font-weight: 800;
+    background: rgba(255,255,255,0.13); color: #fff;
+    padding: 1px 9px; border-radius: 999px; min-width: 24px; text-align: center;
   }
-  .data-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tab.active .count { background: rgba(255,255,255,0.26); }
+  .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
+  .logout-btn {
+    background: rgba(255,255,255,0.07); color: #E7EAF3;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 9px 14px; border-radius: 9px;
+    font-size: 12.5px; font-weight: 700; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.15); }
 
+  /* ===== Main ===== */
+  .main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .topbar {
+    display: flex; align-items: center; gap: 14px;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 28px 10px 28px;
+  }
+  .mobile-mark {
+    display: none; width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent) 0%, #7C93F0 100%);
+    color: #fff; font-weight: 800; align-items: center; justify-content: center;
+  }
+  .topbar h1 { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.25; }
+  .page-sub { font-size: 12px; color: var(--text-mute); font-weight: 500; }
+  .top-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .save-status {
+    font-size: 11.5px; font-weight: 700; white-space: nowrap;
+    background: var(--navy); padding: 6px 12px; border-radius: 999px;
+  }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-mute);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-sm); transition: background 0.15s, color 0.15s;
+  }
+  .icon-btn:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .tools { position: relative; }
+  .tools-menu {
+    position: absolute; right: 0; top: 44px; min-width: 210px; z-index: 700;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 6px; box-shadow: var(--shadow-md);
+    display: none;
+  }
+  .tools-menu.show { display: block; }
+  .tools-menu button {
+    display: block; width: 100%; text-align: left;
+    background: none; border: none; color: var(--text);
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+  }
+  .tools-menu button:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .tools-menu button.danger { color: var(--danger); }
+  .tools-menu hr { border: none; border-top: 1px solid var(--border); margin: 4px 6px; }
+
+  .quick { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 28px 14px 28px; }
+  .qs {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 13px;
+    font-size: 12px; color: var(--text-mute); font-weight: 600;
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .qs b { color: var(--text); font-weight: 800; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .qs.green b { color: var(--success); }
+
+  .content {
+    flex: 1; min-height: 0; overflow: hidden;
+    display: flex; flex-direction: column;
+    padding: 0 28px 24px 28px;
+  }
   .page { display: none; }
-  .page.active { display: block; }
+  .page.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  #page-monthly.active { overflow-y: auto; padding-bottom: 8px; }
+  #page-monthly > * { flex-shrink: 0; }
 
-  /* ===== Panel ===== */
+  /* ===== Panels ===== */
   .panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -123,82 +213,63 @@
     box-shadow: var(--shadow-sm);
     overflow: hidden;
   }
+  .list-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; }
   .panel-title {
-    display: flex; align-items: center; gap: 8px;
-    padding: 15px 20px;
-    font-weight: 800; font-size: 13.5px;
-    color: var(--text);
+    display: flex; align-items: center; gap: 9px;
+    padding: 14px 18px;
+    font-weight: 800; font-size: 14px;
     border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
   }
   .panel-title::before {
     content: ''; width: 7px; height: 7px; border-radius: 50%;
     background: var(--accent); flex-shrink: 0;
   }
+  .count-pill {
+    background: var(--accent-light); color: var(--accent-dark);
+    font-size: 11.5px; font-weight: 800; padding: 2px 10px; border-radius: 999px;
+  }
   .panel-search {
     margin-left: auto;
     border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 12.5px;
-    font-family: inherit;
-    width: 200px; max-width: 45%;
-    font-weight: 500;
+    background: var(--surface-2); color: var(--text);
+    border-radius: 999px; padding: 7px 15px;
+    font-size: 12.5px; font-family: inherit;
+    width: 220px; max-width: 100%; font-weight: 500;
   }
   .panel-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
-  .panel-body { padding: 20px; }
+  .panel-body { padding: 18px; }
 
-  .form-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
-  .field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 140px; }
-  .field label {
-    font-size: 11px; color: var(--text-mute); font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.3px;
-  }
-  .field input, .field select {
-    border: 1px solid var(--border);
-    border-radius: 7px; padding: 9px 11px;
-    font-size: 13.5px; font-family: inherit;
-    background: var(--surface); color: var(--text);
-    width: 100%; height: 38px;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .field input:focus, .field select:focus {
-    outline: none; border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-light);
-  }
-  .field input[readonly] { background: #F7F8FC; color: var(--navy); font-weight: 700; }
-  .field.wide { flex: 1 1 220px; }
-  .field.narrow { flex: 0 1 130px; }
-  .field.xnarrow { flex: 0 1 100px; }
-
+  /* ===== Buttons ===== */
   .btn {
-    border: none; border-radius: 8px; padding: 9px 20px;
+    border: none; border-radius: 10px; padding: 9px 20px;
     font-size: 13.5px; font-weight: 700; cursor: pointer;
-    font-family: inherit; height: 38px;
-    transition: background 0.15s, transform 0.05s;
+    font-family: inherit; height: 38px; white-space: nowrap;
+    transition: filter 0.15s, transform 0.05s, background 0.15s;
   }
   .btn:disabled { opacity: 0.6; cursor: default; }
-  .btn-main { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
-  .btn-main:hover { background: var(--accent-dark); }
+  .btn-main { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(62,99,221,0.35); }
+  .btn-main:hover { filter: brightness(0.93); }
   .btn-main:active { transform: translateY(1px); }
   .btn-nav {
-    background: var(--surface); color: var(--navy);
+    background: var(--surface); color: var(--text);
     border: 1px solid var(--border);
-    padding: 7px 14px; font-size: 13.5px; border-radius: 8px;
+    padding: 7px 14px; font-size: 13.5px; border-radius: 9px;
     cursor: pointer; font-weight: 700; font-family: inherit;
   }
   .btn-nav:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); }
   .btn-del {
     background: var(--surface); color: var(--danger);
-    border: 1px solid #F3C6C2;
-    padding: 5px 12px; font-size: 11.5px; border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    padding: 4px 11px; font-size: 11.5px; border-radius: 999px;
     cursor: pointer; font-weight: 700; font-family: inherit;
     transition: background 0.15s, color 0.15s;
   }
   .btn-del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
   .btn-edit {
     background: var(--surface); color: var(--accent-dark);
-    border: 1px solid #C7D3F7;
-    padding: 5px 12px; font-size: 11.5px; border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    padding: 4px 11px; font-size: 11.5px; border-radius: 999px;
     cursor: pointer; font-weight: 700; font-family: inherit;
     transition: background 0.15s, color 0.15s;
     margin-right: 4px;
@@ -207,87 +278,214 @@
   .btn-ghost {
     background: var(--surface); color: var(--text-mute);
     border: 1px solid var(--border);
-    padding: 9px 18px; font-size: 13.5px; border-radius: 8px;
+    padding: 9px 18px; font-size: 13.5px; border-radius: 10px;
     cursor: pointer; font-weight: 700; font-family: inherit; height: 38px;
   }
-  .btn-ghost:hover { background: #F1F2F6; }
+  .btn-ghost:hover { background: var(--chip); }
 
-  .hint { font-size: 12px; color: var(--danger); margin-top: 10px; min-height: 15px; font-weight: 600; }
+  /* ===== Form fields ===== */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11.5px; color: var(--text-mute); font-weight: 700; letter-spacing: 0.2px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .field input, .field select {
+    border: 1px solid var(--border);
+    border-radius: 9px; padding: 9px 12px;
+    font-size: 14px; font-family: inherit;
+    background: var(--surface); color: var(--text);
+    width: 100%; height: 40px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .field input[readonly] { background: var(--surface-2); color: var(--accent-dark); font-weight: 700; }
+  .field input.mono-in { font-family: var(--mono); letter-spacing: 0.3px; font-variant-numeric: tabular-nums; }
+  .field input.num { text-align: right; }
+  .imei-help { font-size: 11.5px; font-weight: 700; min-height: 16px; color: var(--text-faint); }
+  .imei-help.ok { color: var(--success); }
+  .imei-help.warn { color: var(--amber); }
+
+  .hint { font-size: 12.5px; color: var(--danger); min-height: 18px; font-weight: 600; line-height: 1.4; }
   .hint.ok { color: var(--success); }
 
+  /* ===== Slide-over ===== */
+  .so-backdrop {
+    position: fixed; inset: 0; z-index: 800;
+    background: rgba(12,18,32,0.5);
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none; transition: opacity 0.28s;
+  }
+  .so-backdrop.show { opacity: 1; pointer-events: auto; }
+  .slideover {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 810;
+    width: min(470px, 100vw);
+    background: var(--surface);
+    display: flex; flex-direction: column;
+    box-shadow: -18px 0 48px rgba(12,18,32,0.3);
+    transform: translateX(104%); visibility: hidden;
+    transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.34s;
+  }
+  .slideover.show { transform: none; visibility: visible; transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s; }
+  .so-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 24px 16px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .so-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .so-head p { font-size: 12.5px; color: var(--text-mute); margin-top: 2px; }
+  .so-x {
+    border: none; background: transparent; font-size: 26px; line-height: 1;
+    color: var(--text-mute); cursor: pointer; padding: 2px 9px; border-radius: 8px;
+  }
+  .so-x:hover { background: var(--accent-light); color: var(--accent-dark); }
+  .so-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 14px; }
+  .form-grid .field { min-width: 0; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .so-note {
+    grid-column: 1 / -1; background: var(--accent-light); color: var(--accent-dark);
+    border-radius: 10px; padding: 10px 13px; font-size: 12.5px; font-weight: 600;
+  }
+  .so-foot {
+    padding: 14px 24px calc(18px + env(safe-area-inset-bottom, 0px)) 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .so-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .so-actions .btn-main { flex: 1; height: 42px; font-size: 14px; }
+  .so-actions .btn-ghost { height: 42px; }
+
   /* ===== Table ===== */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 12.5px; }
+  .table-wrap { flex: 1; min-height: 0; overflow: auto; }
+  .table-wrap.short { flex: none; max-height: 340px; }
+  table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  #page-purchase table { min-width: 940px; }
+  #page-sales table { min-width: 1140px; }
   thead th {
-    background: #FAFBFD; color: var(--text-mute);
-    padding: 11px 10px; text-align: center;
-    font-weight: 700; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.3px;
+    position: sticky; top: 0; z-index: 3;
+    background: var(--surface-2); color: var(--text-mute);
+    padding: 11px 12px; text-align: center;
+    font-weight: 700; font-size: 11.5px;
+    letter-spacing: 0.3px;
     border-bottom: 1px solid var(--border);
     white-space: nowrap;
   }
+  thead th.l { text-align: left; }
+  thead th.r { text-align: right; }
   tbody td {
-    padding: 10px 10px; text-align: center;
-    border-bottom: 1px solid #EEF0F4;
+    padding: 11px 12px; text-align: center;
+    border-bottom: 1px solid var(--row-line);
     background: var(--surface); color: var(--text);
-    white-space: nowrap; /* 좁은 화면에서 글자가 세로로 꺾이지 않게 (표는 가로 스크롤) */
+    white-space: nowrap;
   }
-  tbody tr:nth-child(even) td { background: #FBFCFE; }
+  tbody tr:nth-child(even) td { background: var(--row-alt); }
   tbody tr:hover td { background: var(--accent-light); }
   tbody tr.editing-row td { background: var(--amber-light) !important; }
-  .empty-row td { padding: 30px; color: var(--text-faint); font-weight: 500; }
+  .empty-row td { padding: 44px; color: var(--text-faint); font-weight: 500; }
+  /* 날짜 · IMEI · 금액은 고정폭 숫자 */
+  #p_table_body td:nth-child(2), #p_table_body td:nth-child(4), #p_table_body td:nth-child(7),
+  #s_table_body td:nth-child(2), #s_table_body td:nth-child(4), #s_table_body td:nth-child(7),
+  #s_table_body td:nth-child(8), #s_table_body td:nth-child(9), #s_table_body td:nth-child(10),
+  #m_purchase_table td:nth-child(2), #m_purchase_table td:nth-child(4), #m_purchase_table td:nth-child(7),
+  #m_sales_table td:nth-child(2), #m_sales_table td:nth-child(4), #m_sales_table td:nth-child(5),
+  #m_sales_table td:nth-child(6), #m_sales_table td:nth-child(7) {
+    font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0.2px; font-size: 12.5px;
+  }
+  td.imei-cell { cursor: pointer; user-select: none; }
+  td.imei-cell:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 3px; }
 
   .badge {
-    display: inline-block; padding: 3px 10px;
-    border-radius: 999px; font-size: 11px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 3px 11px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 800; min-width: 28px; line-height: 1.5;
+  }
+  .badge-stock::before, .badge-sold::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
   }
   .badge-stock { background: var(--success-light); color: var(--success); }
-  .badge-sold { background: #EEF0F4; color: var(--text-mute); }
+  .badge-sold { background: var(--chip); color: var(--text-mute); }
   .badge-grade-S { background: var(--amber-light); color: var(--amber); }
   .badge-grade-A { background: var(--success-light); color: var(--success); }
   .badge-grade-B { background: var(--accent-light); color: var(--accent-dark); }
   .badge-grade-C { background: var(--danger-light); color: var(--danger); }
-
   .margin-pos { color: var(--success); font-weight: 700; }
   .margin-neg { color: var(--danger); font-weight: 700; }
 
-  /* ===== Status bar ===== */
-  .statusbar {
-    display: flex; gap: 28px; flex-wrap: wrap;
-    background: var(--navy); color: #B7C2E3;
-    padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px)) 22px;
-    font-size: 12.5px; font-weight: 500;
-    position: sticky; bottom: 0;
+  /* ===== Month filter chips ===== */
+  .month-filter-row {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
   }
-  .statusbar b { color: #fff; font-weight: 800; }
+  .month-filter-btn {
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-mute); border-radius: 999px;
+    padding: 5px 14px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .month-filter-btn:hover { background: var(--accent-light); color: var(--accent-dark); border-color: var(--accent); }
+  .month-filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  /* ===== Monthly ===== */
-  .month-nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 18px 20px; }
-  .month-nav .month-label { font-size: 17px; font-weight: 800; color: var(--navy); min-width: 120px; text-align: center; }
-  .month-nav input[type="month"] {
-    border: 1px solid var(--border); border-radius: 7px;
-    padding: 7px 10px; font-family: inherit; font-size: 12.5px; height: 36px;
+  /* ===== Dashboard ===== */
+  .dash-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .dash-head .month-label { font-size: 17px; font-weight: 800; min-width: 118px; text-align: center; letter-spacing: -0.3px; }
+  .dash-head input[type="month"] {
+    border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text);
+    padding: 6px 10px; font-family: inherit; font-size: 13px; height: 36px;
   }
-  .stat-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 0 20px 20px 20px; }
+  .stat-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
   .stat-card {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px 18px; position: relative;
+    border-radius: var(--radius); padding: 18px 20px; position: relative; overflow: hidden;
+    box-shadow: var(--shadow-sm); display: flex; gap: 14px; align-items: flex-start;
   }
-  .stat-card::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-    width: 4px; border-radius: var(--radius) 0 0 var(--radius);
-    background: var(--accent);
+  .stat-card .ico {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--tint, var(--accent-light)); color: var(--clr, var(--accent));
   }
-  .stat-card.margin::before { background: var(--success); }
-  .stat-card .label { font-size: 11.5px; color: var(--text-mute); font-weight: 700; }
-  .stat-card .value { font-size: 21px; font-weight: 800; color: var(--navy); margin-top: 6px; letter-spacing: -0.3px; }
+  .stat-card .ico svg { width: 20px; height: 20px; }
+  .stat-card .label { font-size: 12.5px; color: var(--text-mute); font-weight: 700; }
+  .stat-card .value {
+    font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-top: 2px;
+    font-variant-numeric: tabular-nums; line-height: 1.25;
+  }
+  .stat-card .sub { font-size: 11.5px; color: var(--text-faint); margin-top: 3px; font-weight: 500; }
+  .stat-card.blue { --clr: var(--accent); --tint: var(--accent-light); }
+  .stat-card.green { --clr: var(--success); --tint: var(--success-light); }
+  .stat-card.amber { --clr: var(--amber); --tint: var(--amber-light); }
+  .stat-card.slate { --clr: var(--text-mute); --tint: var(--chip); }
 
-  .calendar-wrap { padding: 0 20px 20px 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
+  .grid-2 > .panel { margin-bottom: 0; }
+  .chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 16px 20px 0 20px; }
+  .chart-head b { font-size: 14px; font-weight: 800; }
+  .chart-head .sub { font-size: 12px; color: var(--text-mute); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 12px; font-size: 11.5px; color: var(--text-mute); font-weight: 600; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .chart-box { padding: 6px 14px 14px 14px; }
+  .chart-svg { width: 100%; height: auto; display: block; }
+  .chart-svg text { font-family: inherit; }
+  .chart-svg .dayg .hit { fill: transparent; }
+  .chart-svg .dayg:hover .hit { fill: var(--accent-light); }
+  .chart-empty { fill: var(--text-faint); font-size: 13px; font-weight: 600; }
+  .gd { padding: 16px 20px 18px 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
+  .gd-row { display: flex; align-items: center; gap: 10px; }
+  .gd-track { flex: 1; height: 10px; background: var(--chip); border-radius: 999px; overflow: hidden; }
+  .gd-fill { height: 100%; border-radius: 999px; transition: width 0.4s; }
+  .gd-row b { min-width: 42px; text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .gd-empty { grid-column: 1 / -1; text-align: center; color: var(--text-faint); font-weight: 500; padding: 14px; }
+
+  .calendar-wrap { padding: 4px 18px 18px 18px; }
   .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-  .cal-head { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-mute); padding: 4px 0 8px 0; text-transform: uppercase; }
+  .cal-head { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-mute); padding: 8px 0 6px 0; }
   .cal-cell {
     min-height: 68px; background: var(--surface);
-    border: 1px solid #EEF0F4; border-radius: 8px;
+    border: 1px solid var(--row-line); border-radius: 9px;
     padding: 6px 7px; font-size: 11px; transition: border-color 0.15s;
   }
   .cal-cell:hover { border-color: var(--border); }
@@ -298,6 +496,23 @@
   .cal-tag { display: block; margin-top: 4px; padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 700; }
   .cal-tag.buy { background: var(--accent-light); color: var(--accent-dark); }
   .cal-tag.sell { background: var(--success-light); color: var(--success); }
+
+  /* ===== Toast ===== */
+  .toast-wrap {
+    position: fixed; right: 22px; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); z-index: 2000;
+    display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  }
+  .toast {
+    background: var(--navy); color: #fff; padding: 11px 18px; border-radius: 11px;
+    font-weight: 700; font-size: 13px; box-shadow: 0 10px 28px rgba(0,0,0,0.3);
+    display: flex; align-items: center; gap: 9px;
+    animation: toast-in 0.28s ease both;
+  }
+  .toast::before { content: '✓'; color: #8FE3B3; font-weight: 800; }
+  .toast.err::before { content: '!'; color: #F4C88F; }
+  .toast.out { animation: toast-out 0.25s ease both; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes toast-out { to { opacity: 0; transform: translateY(6px); } }
 
   /* ===== Login / Setup screens ===== */
   .overlay-screen {
@@ -371,55 +586,53 @@
     background: var(--amber-light); color: var(--amber);
     border-radius: 8px; font-size: 12px; font-weight: 600;
   }
-  #app { display: none; }
+  
+  .login-card.wide .login-sub { text-align: left; margin-left: 30px; margin-right: 30px; }
 
-  @media (max-width: 860px) {
-    .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .titlebar { padding: 14px 18px; }
-    .container { padding: 0 14px 24px 14px; }
+  /* ===== Responsive ===== */
+  @media (max-width: 1180px) {
+    .grid-2 { grid-template-columns: minmax(0, 1fr); }
   }
-  @media (max-width: 640px) {
-    /* 모바일: 탭을 화면 전체 폭 3등분 (어플 느낌) */
-    .tab-toolbar { flex-direction: column; align-items: stretch; }
-    .tabstrip { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
-    .tab { padding: 11px 0; }
-    .data-tools { justify-content: center; }
-    .data-tools .btn-nav { flex: 1; }
-    .btn, .btn-nav, .btn-ghost { min-height: 42px; }
+  @media (max-width: 860px) {
+    /* 모바일: 사이드바가 하단 탭바로 바뀜 (어플 느낌) */
+    .shell { flex-direction: column-reverse; }
+    .sidebar {
+      width: 100%; flex-direction: row; padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
+      background: var(--navy); box-shadow: 0 -4px 16px rgba(0,0,0,0.18);
+    }
+    .side-brand, .side-label, .side-foot { display: none; }
+    .nav { flex-direction: row; width: 100%; gap: 4px; }
+    .tab {
+      flex: 1; flex-direction: column; gap: 3px; margin: 0;
+      padding: 8px 4px; font-size: 11.5px; justify-content: center; text-align: center;
+    }
+    .tab.active { box-shadow: none; }
+    .tab .count { position: absolute; top: 2px; right: calc(50% - 30px); margin: 0; padding: 0 6px; min-width: 18px; font-size: 10px; }
+    .mobile-mark { display: flex; }
+    .topbar { padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 8px 16px; gap: 10px; }
+    .topbar h1 { font-size: 18px; }
+    .quick { padding: 2px 16px 10px 16px; flex-wrap: nowrap; overflow-x: auto; }
+    .content { padding: 0 14px 14px 14px; }
+    .toast-wrap { right: 14px; left: 14px; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); align-items: center; }
+    .stat-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .stat-card { padding: 14px; gap: 10px; }
+    .stat-card .ico { display: none; }
+    .stat-card .value { font-size: 19px; }
+    .gd { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 540px) {
-    .stat-cards { grid-template-columns: 1fr 1fr; gap: 9px; }
-    .stat-card .value { font-size: 18px; }
+    .save-status { padding: 5px 9px; font-size: 10.5px; }
+    .panel-search { width: 100%; margin-left: 0; order: 5; }
+    .panel-title { padding: 12px 14px; }
+    .month-filter-row { padding: 10px 14px; }
+    .form-grid { gap: 16px 12px; }
+    .so-body, .so-head, .so-foot { padding-left: 18px; padding-right: 18px; }
     .cal-cell { min-height: 46px; font-size: 10px; padding: 4px 5px; }
     .cal-tag { font-size: 9px; padding: 1px 4px; }
-    .header-date { display: none; }
-    .panel-search { width: 140px; }
-    .panel-body { padding: 16px; }
-    .form-row { gap: 11px; }
-    .field.narrow, .field.xnarrow { flex: 1 1 46%; }
+    .page-sub { font-size: 11px; }
   }
-</style>
-<style>
-  /* ===== 월별 목록 필터 (추가) ===== */
-  .month-filter-row {
-    display: flex; flex-wrap: wrap; gap: 6px;
-    padding: 0 20px 14px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .month-filter-btn {
-    border: 1px solid var(--border); background: var(--surface);
-    color: var(--text-mute); border-radius: 999px;
-    padding: 5px 13px; font-size: 12px; font-weight: 700;
-    cursor: pointer; font-family: inherit;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-  }
-  .month-filter-btn:hover { background: var(--accent-light); color: var(--accent-dark); border-color: var(--accent); }
-  .month-filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  @media (max-width: 540px) {
-    .month-filter-row { padding: 0 16px 12px 16px; }
-  }
-</style>
 
+</style>
 <style>
   /* ===== 판매목록 IMEI 더블클릭 → 매입정보 팝업 (추가) ===== */
   td.imei-cell { cursor: pointer; user-select: none; }
@@ -508,284 +721,351 @@
   </div>
 </div>
 
+
+
 <div id="app">
-<div class="titlebar">
-  <div class="brand">
-    <div class="brand-mark">a</div>
-    <div class="brand-text">
-      <h1>aionio</h1>
-      <div class="tagline">aion</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <div class="save-status" id="save_status">● 연결 중...</div>
-    <div class="header-date" id="header_date"></div>
-    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
-  </div>
-</div>
+<div class="shell">
 
-<div class="container">
-<div class="tab-toolbar">
-  <div class="tabstrip">
-    <div class="tab active" data-tab="purchase" onclick="switchTab('purchase')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M8.5 8.5L12 12l3.5-3.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
-      매입관리
-    </div>
-    <div class="tab" data-tab="sales" onclick="switchTab('sales')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l10 10-6 6L4 10V4z"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/></svg>
-      판매관리
-    </div>
-    <div class="tab" data-tab="monthly" onclick="switchTab('monthly')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 11h16"/><path d="M8 3.5v4M16 3.5v4"/></svg>
-      월별현황
-    </div>
-  </div>
-  <div class="data-tools">
-    <button class="btn-nav" onclick="exportCsv()">⬇ 엑셀(CSV) 내려받기</button>
-    <button class="btn-nav" onclick="document.getElementById('legacy_file').click()">⬆ 예전 백업 가져오기</button>
-    <input type="file" id="legacy_file" accept="application/json" style="display:none" onchange="handleLegacyFile(event)">
-  </div>
-</div>
-
-<!-- ================= 매입관리 ================= -->
-<div class="page active" id="page-purchase">
-  <div class="panel">
-    <div class="panel-title">매입 등록</div>
-    <div class="panel-body">
-      <div class="form-row">
-        <div class="field narrow">
-          <label>매입일</label>
-          <input type="date" id="p_date">
-        </div>
-        <div class="field wide">
-          <label>모델명</label>
-          <input type="text" id="p_model" placeholder="예: 아이폰 15 Pro 256GB">
-        </div>
-        <div class="field wide">
-          <label>IMEI</label>
-          <input type="text" id="p_imei" placeholder="IMEI 번호 입력" inputmode="numeric">
-        </div>
-        <div class="field xnarrow">
-          <label>색상</label>
-          <input type="text" id="p_color" placeholder="예: 블랙">
-        </div>
-        <div class="field xnarrow">
-          <label>등급</label>
-          <select id="p_grade">
-            <option value="S">S (신품급)</option>
-            <option value="A">A (상급)</option>
-            <option value="B">B (중급)</option>
-            <option value="C">C (하급)</option>
-          </select>
-        </div>
-        <div class="field narrow">
-          <label>매입가 (원)</label>
-          <input type="text" id="p_cost" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this)">
-        </div>
-        <div class="field wide">
-          <label>특이사항</label>
-          <input type="text" id="p_note" placeholder="예: 액정 미세스크래치, 배터리 92%">
-        </div>
-        <button class="btn btn-main" id="p_submit_btn" onclick="submitPurchase()">매입 등록</button>
-        <button class="btn-ghost" id="p_cancel_btn" style="display:none;" onclick="cancelPurchaseEdit()">취소</button>
-      </div>
-      <div class="hint" id="p_hint"></div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-title">매입 목록
-      <input class="panel-search" id="p_search" placeholder="모델명·IMEI 검색" oninput="setPurchaseFilter(this.value)">
-    </div>
-    <div class="month-filter-row" id="p_month_filter"></div>
-    <div class="panel-body" style="padding:0;">
-      <div class="table-wrap"><table>
-        <thead>
-          <tr>
-            <th style="width:40px;">No</th>
-            <th style="width:90px;">매입일</th>
-            <th>모델명</th>
-            <th>IMEI</th>
-            <th style="width:70px;">색상</th>
-            <th style="width:55px;">등급</th>
-            <th style="width:100px;">매입가</th>
-            <th>특이사항</th>
-            <th style="width:80px;">상태</th>
-            <th style="width:120px;">관리</th>
-          </tr>
-        </thead>
-        <tbody id="p_table_body"></tbody>
-      </table></div>
-    </div>
-  </div>
-</div>
-
-<!-- ================= 판매관리 ================= -->
-<div class="page" id="page-sales">
-  <div class="panel">
-    <div class="panel-title">판매 등록</div>
-    <div class="panel-body">
-      <div class="form-row">
-        <div class="field narrow">
-          <label>판매일</label>
-          <input type="date" id="s_date">
-        </div>
-        <div class="field wide">
-          <label>IMEI 입력</label>
-          <input type="text" id="s_imei" list="s_imei_list" placeholder="재고 IMEI 입력 또는 선택" oninput="lookupImei()">
-          <datalist id="s_imei_list"></datalist>
-        </div>
-        <div class="field wide">
-          <label>모델명</label>
-          <input type="text" id="s_model" readonly placeholder="자동 입력">
-        </div>
-        <div class="field xnarrow">
-          <label>색상</label>
-          <input type="text" id="s_color" readonly placeholder="자동 입력">
-        </div>
-        <div class="field xnarrow">
-          <label>등급</label>
-          <input type="text" id="s_grade" readonly placeholder="자동 입력">
-        </div>
-        <div class="field narrow">
-          <label>매입가 (원)</label>
-          <input type="text" id="s_cost" readonly placeholder="자동 입력">
-        </div>
-        <div class="field narrow">
-          <label>판매가 (원)</label>
-          <input type="text" id="s_price" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this); calcMargin();">
-        </div>
-        <div class="field narrow">
-          <label>마진</label>
-          <input type="text" id="s_margin" readonly placeholder="0">
-        </div>
-        <div class="field wide">
-          <label>특이사항</label>
-          <input type="text" id="s_note" placeholder="예: 당일 직거래, 택배 발송">
-        </div>
-        <button class="btn btn-main" id="s_submit_btn" onclick="submitSale()">판매 등록</button>
-        <button class="btn-ghost" id="s_cancel_btn" style="display:none;" onclick="cancelSalesEdit()">취소</button>
-      </div>
-      <div class="hint" id="s_hint"></div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-title">판매 목록
-      <input class="panel-search" id="s_search" placeholder="모델명·IMEI 검색" oninput="setSalesFilter(this.value)">
-    </div>
-    <div class="month-filter-row" id="s_month_filter"></div>
-    <div class="panel-body" style="padding:0;">
-      <div class="table-wrap"><table>
-        <thead>
-          <tr>
-            <th style="width:40px;">No</th>
-            <th style="width:90px;">판매일</th>
-            <th>모델명</th>
-            <th>IMEI</th>
-            <th style="width:70px;">색상</th>
-            <th style="width:55px;">등급</th>
-            <th style="width:95px;">매입가</th>
-            <th style="width:95px;">판매가</th>
-            <th style="width:85px;">마진</th>
-            <th style="width:65px;">마진율</th>
-            <th>특이사항</th>
-            <th style="width:120px;">관리</th>
-          </tr>
-        </thead>
-        <tbody id="s_table_body"></tbody>
-      </table></div>
-    </div>
-  </div>
-</div>
-
-<!-- ================= 월별현황 ================= -->
-<div class="page" id="page-monthly">
-  <div class="panel">
-    <div class="panel-title">월 선택</div>
-    <div class="month-nav">
-      <button class="btn-nav" onclick="monthlyShift(-1)">◀</button>
-      <div class="month-label" id="m_month_label"></div>
-      <button class="btn-nav" onclick="monthlyShift(1)">▶</button>
-      <input type="month" id="m_month_input" onchange="monthlyJump(this.value)">
-      <button class="btn-nav" onclick="monthlyToday()">이번달</button>
-    </div>
-
-    <div class="stat-cards">
-      <div class="stat-card">
-        <div class="label">매입 건수</div>
-        <div class="value" id="m_stat_pcount">0건</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">매입 총액</div>
-        <div class="value" id="m_stat_pcost">0원</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">판매 건수</div>
-        <div class="value" id="m_stat_scount">0건</div>
-      </div>
-      <div class="stat-card margin">
-        <div class="label">판매 마진 합계</div>
-        <div class="value" id="m_stat_margin">0원</div>
+  <!-- ===== 좌측 사이드바 ===== -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-mark">a</div>
+      <div>
+        <div class="brand-name">aionio</div>
+        <div class="brand-tag">매입 · 판매 · 재고</div>
       </div>
     </div>
+    <div class="side-label">MENU</div>
+    <nav class="nav">
+      <div class="tab active" data-tab="purchase" onclick="switchTab('purchase')" role="button" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M8.5 8.5L12 12l3.5-3.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+        <span>매입 관리</span><span class="count" id="nav_stock" title="현재 재고 수">0</span>
+      </div>
+      <div class="tab" data-tab="sales" onclick="switchTab('sales')" role="button" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l10 10-6 6L4 10V4z"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+        <span>판매 관리</span>
+      </div>
+      <div class="tab" data-tab="monthly" onclick="switchTab('monthly')" role="button" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        <span>대시보드</span>
+      </div>
+    </nav>
+    <div class="side-foot">
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </aside>
 
-    <div class="calendar-wrap">
-      <div class="calendar" id="m_calendar_head"></div>
-      <div class="calendar" id="m_calendar" style="margin-top:4px;"></div>
+  <!-- ===== 메인 ===== -->
+  <main class="main">
+    <header class="topbar">
+      <div class="mobile-mark">a</div>
+      <div>
+        <h1 id="page_title">매입 관리</h1>
+        <div class="page-sub" id="header_date"></div>
+      </div>
+      <div class="top-right">
+        <div class="save-status" id="save_status">● 연결 중...</div>
+        <div class="tools">
+          <button class="icon-btn" id="tools_btn" type="button" aria-haspopup="true" aria-expanded="false" title="더보기">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+          </button>
+          <div class="tools-menu" id="tools_menu">
+            <button type="button" onclick="exportCsv()">⬇&nbsp; 엑셀(CSV) 내려받기</button>
+            <button type="button" onclick="document.getElementById('legacy_file').click()">⬆&nbsp; 예전 백업 가져오기</button>
+            <button type="button" id="theme_btn">◐&nbsp; 다크 모드</button>
+            <hr>
+            <button type="button" class="danger" onclick="doLogout()">로그아웃</button>
+          </div>
+          <input type="file" id="legacy_file" accept="application/json" style="display:none" onchange="handleLegacyFile(event)">
+        </div>
+      </div>
+    </header>
+
+    <div class="quick">
+      <div class="qs">전체 매입 <b id="stat_total">0</b>건</div>
+      <div class="qs">재고 <b id="stat_stock">0</b>건</div>
+      <div class="qs">판매완료 <b id="stat_sold">0</b>건</div>
+      <div class="qs green">총 마진 <b id="stat_margin">0</b>원</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ================= 매입관리 ================= -->
+      <div class="page active" id="page-purchase">
+        <div class="panel list-panel">
+          <div class="panel-title">매입 목록 <span class="count-pill" id="p_count">0건</span>
+            <input class="panel-search" id="p_search" placeholder="모델명·IMEI 검색" oninput="setPurchaseFilter(this.value)">
+            <button class="btn btn-main" type="button" onclick="openSlide('purchase')">＋ 매입 등록</button>
+          </div>
+          <div class="month-filter-row" id="p_month_filter"></div>
+          <div class="table-wrap"><table>
+            <thead>
+              <tr>
+                <th style="width:50px;">No</th>
+                <th style="width:110px;">매입일</th>
+                <th class="l">모델명</th>
+                <th style="width:150px;">IMEI</th>
+                <th style="width:80px;">색상</th>
+                <th style="width:70px;">등급</th>
+                <th class="r" style="width:110px;">매입가</th>
+                <th class="l">특이사항</th>
+                <th style="width:100px;">상태</th>
+                <th style="width:130px;">관리</th>
+              </tr>
+            </thead>
+            <tbody id="p_table_body"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ================= 판매관리 ================= -->
+      <div class="page" id="page-sales">
+        <div class="panel list-panel">
+          <div class="panel-title">판매 목록 <span class="count-pill" id="s_count">0건</span>
+            <input class="panel-search" id="s_search" placeholder="모델명·IMEI 검색" oninput="setSalesFilter(this.value)">
+            <button class="btn btn-main" type="button" onclick="openSlide('sales')">＋ 판매 등록</button>
+          </div>
+          <div class="month-filter-row" id="s_month_filter"></div>
+          <div class="table-wrap"><table>
+            <thead>
+              <tr>
+                <th style="width:50px;">No</th>
+                <th style="width:110px;">판매일</th>
+                <th class="l">모델명</th>
+                <th style="width:150px;">IMEI</th>
+                <th style="width:80px;">색상</th>
+                <th style="width:70px;">등급</th>
+                <th class="r" style="width:105px;">매입가</th>
+                <th class="r" style="width:105px;">판매가</th>
+                <th class="r" style="width:100px;">마진</th>
+                <th class="r" style="width:80px;">마진율</th>
+                <th class="l">특이사항</th>
+                <th style="width:130px;">관리</th>
+              </tr>
+            </thead>
+            <tbody id="s_table_body"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ================= 대시보드 (월별현황) ================= -->
+      <div class="page" id="page-monthly">
+        <div class="dash-head">
+          <button class="btn-nav" onclick="monthlyShift(-1)" aria-label="이전 달">◀</button>
+          <div class="month-label" id="m_month_label"></div>
+          <button class="btn-nav" onclick="monthlyShift(1)" aria-label="다음 달">▶</button>
+          <input type="month" id="m_month_input" onchange="monthlyJump(this.value)">
+          <button class="btn-nav" onclick="monthlyToday()">이번달</button>
+        </div>
+
+        <div class="stat-cards">
+          <div class="stat-card blue">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M8.5 8.5L12 12l3.5-3.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg></div>
+            <div><div class="label">총 매입 건수</div><div class="value" id="m_stat_pcount">0건</div><div class="sub">선택한 달 기준</div></div>
+          </div>
+          <div class="stat-card green">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
+            <div><div class="label">총 마진액</div><div class="value" id="m_stat_margin">0원</div><div class="sub">판매 마진 합계</div></div>
+          </div>
+          <div class="stat-card amber">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
+            <div><div class="label">재고 수</div><div class="value" id="m_stat_stock">0건</div><div class="sub" id="m_stat_stockval">재고 원가 합계 0원</div></div>
+          </div>
+          <div class="stat-card slate">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg></div>
+            <div><div class="label">매입 총액</div><div class="value" id="m_stat_pcost">0원</div><div class="sub">선택한 달 매입가 합계</div></div>
+          </div>
+          <div class="stat-card slate">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6l10 10-6 6L4 10V4z"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+            <div><div class="label">판매 건수</div><div class="value" id="m_stat_scount">0건</div><div class="sub">선택한 달 기준</div></div>
+          </div>
+          <div class="stat-card green">
+            <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.2"/><circle cx="17" cy="17" r="2.2"/></svg></div>
+            <div><div class="label">평균 마진율</div><div class="value" id="m_stat_rate">-</div><div class="sub">마진 ÷ 판매가 합계</div></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="chart-head"><b>일별 매입 · 판매 건수</b>
+              <div class="legend"><span><i style="background:var(--accent)"></i>매입</span><span><i style="background:var(--success)"></i>판매</span></div>
+            </div>
+            <div class="chart-box" id="chart_daily"></div>
+          </div>
+          <div class="panel">
+            <div class="chart-head"><b>누적 마진 추이</b><span class="sub" id="chart_cum_total"></span></div>
+            <div class="chart-box" id="chart_cum"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="chart-head"><b>등급별 재고 현황</b><span class="sub" id="chart_grade_sub"></span></div>
+          <div class="gd" id="chart_grade"></div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <div class="panel-title">이 달의 매입 내역</div>
+            <div class="table-wrap short"><table>
+              <thead>
+                <tr>
+                  <th style="width:50px;">No</th>
+                  <th style="width:110px;">매입일</th>
+                  <th class="l">모델명</th>
+                  <th style="width:150px;">IMEI</th>
+                  <th style="width:80px;">색상</th>
+                  <th style="width:70px;">등급</th>
+                  <th class="r" style="width:110px;">매입가</th>
+                  <th style="width:100px;">상태</th>
+                </tr>
+              </thead>
+              <tbody id="m_purchase_table"></tbody>
+            </table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">이 달의 판매 내역</div>
+            <div class="table-wrap short"><table>
+              <thead>
+                <tr>
+                  <th style="width:50px;">No</th>
+                  <th style="width:110px;">판매일</th>
+                  <th class="l">모델명</th>
+                  <th style="width:150px;">IMEI</th>
+                  <th class="r" style="width:105px;">매입가</th>
+                  <th class="r" style="width:105px;">판매가</th>
+                  <th class="r" style="width:100px;">마진</th>
+                </tr>
+              </thead>
+              <tbody id="m_sales_table"></tbody>
+            </table></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">월간 달력</div>
+          <div class="calendar-wrap">
+            <div class="calendar" id="m_calendar_head"></div>
+            <div class="calendar" id="m_calendar" style="margin-top:4px;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /shell -->
+
+<!-- ===== 슬라이드 오버: 매입 등록 ===== -->
+<div class="so-backdrop" id="so_backdrop" onclick="closeSlide()"></div>
+
+<aside class="slideover" id="so_purchase" role="dialog" aria-modal="true" aria-labelledby="so_p_title">
+  <div class="so-head">
+    <div><h2 id="so_p_title">매입 등록</h2><p>입고한 기기 정보를 입력해주세요.</p></div>
+    <button type="button" class="so-x" onclick="closeSlide()" aria-label="닫기">×</button>
+  </div>
+  <div class="so-body">
+    <div class="form-grid">
+      <div class="field">
+        <label>매입일</label>
+        <input type="date" id="p_date">
+      </div>
+      <div class="field">
+        <label>매입가 (원)</label>
+        <input type="text" class="mono-in num" id="p_cost" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this)">
+      </div>
+      <div class="field full">
+        <label>모델명</label>
+        <input type="text" id="p_model" placeholder="예: 아이폰 15 Pro 256GB">
+      </div>
+      <div class="field full">
+        <label>IMEI <span class="imei-help" id="p_imei_help"></span></label>
+        <input type="text" class="mono-in" id="p_imei" placeholder="IMEI 번호 입력" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>색상</label>
+        <input type="text" id="p_color" placeholder="예: 블랙">
+      </div>
+      <div class="field">
+        <label>등급</label>
+        <select id="p_grade">
+          <option value="S">S (신품급)</option>
+          <option value="A">A (상급)</option>
+          <option value="B">B (중급)</option>
+          <option value="C">C (하급)</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>특이사항</label>
+        <input type="text" id="p_note" placeholder="예: 액정 미세스크래치, 배터리 92%">
+      </div>
     </div>
   </div>
-
-  <div class="panel">
-    <div class="panel-title">이 달의 매입 내역</div>
-    <div class="panel-body" style="padding:0;">
-      <div class="table-wrap"><table>
-        <thead>
-          <tr>
-            <th style="width:40px;">No</th>
-            <th style="width:90px;">매입일</th>
-            <th>모델명</th>
-            <th>IMEI</th>
-            <th style="width:70px;">색상</th>
-            <th style="width:55px;">등급</th>
-            <th style="width:100px;">매입가</th>
-            <th style="width:80px;">상태</th>
-          </tr>
-        </thead>
-        <tbody id="m_purchase_table"></tbody>
-      </table></div>
+  <div class="so-foot">
+    <div class="hint" id="p_hint"></div>
+    <div class="so-actions">
+      <button class="btn-ghost" id="p_cancel_btn" style="display:none;" onclick="cancelPurchaseEdit()">취소</button>
+      <button class="btn btn-main" id="p_submit_btn" onclick="submitPurchase()">매입 등록</button>
     </div>
   </div>
+</aside>
 
-  <div class="panel">
-    <div class="panel-title">이 달의 판매 내역</div>
-    <div class="panel-body" style="padding:0;">
-      <div class="table-wrap"><table>
-        <thead>
-          <tr>
-            <th style="width:40px;">No</th>
-            <th style="width:90px;">판매일</th>
-            <th>모델명</th>
-            <th>IMEI</th>
-            <th style="width:95px;">매입가</th>
-            <th style="width:95px;">판매가</th>
-            <th style="width:85px;">마진</th>
-          </tr>
-        </thead>
-        <tbody id="m_sales_table"></tbody>
-      </table></div>
+<!-- ===== 슬라이드 오버: 판매 등록 ===== -->
+<aside class="slideover" id="so_sales" role="dialog" aria-modal="true" aria-labelledby="so_s_title">
+  <div class="so-head">
+    <div><h2 id="so_s_title">판매 등록</h2><p>IMEI를 입력하면 매입 정보가 자동으로 채워집니다.</p></div>
+    <button type="button" class="so-x" onclick="closeSlide()" aria-label="닫기">×</button>
+  </div>
+  <div class="so-body">
+    <div class="form-grid">
+      <div class="field">
+        <label>판매일</label>
+        <input type="date" id="s_date">
+      </div>
+      <div class="field">
+        <label>판매가 (원)</label>
+        <input type="text" class="mono-in num" id="s_price" placeholder="0" inputmode="numeric" oninput="formatMoneyInput(this); calcMargin();">
+      </div>
+      <div class="field full">
+        <label>IMEI 입력</label>
+        <input type="text" class="mono-in" id="s_imei" list="s_imei_list" placeholder="재고 IMEI 입력 또는 선택" oninput="lookupImei()">
+        <datalist id="s_imei_list"></datalist>
+      </div>
+      <div class="field full">
+        <label>모델명</label>
+        <input type="text" id="s_model" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>색상</label>
+        <input type="text" id="s_color" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>등급</label>
+        <input type="text" id="s_grade" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>매입가 (원)</label>
+        <input type="text" class="mono-in num" id="s_cost" readonly placeholder="자동 입력">
+      </div>
+      <div class="field">
+        <label>마진</label>
+        <input type="text" class="mono-in num" id="s_margin" readonly placeholder="0">
+      </div>
+      <div class="field full">
+        <label>특이사항</label>
+        <input type="text" id="s_note" placeholder="예: 당일 직거래, 택배 발송">
+      </div>
     </div>
   </div>
-</div>
-</div>
+  <div class="so-foot">
+    <div class="hint" id="s_hint"></div>
+    <div class="so-actions">
+      <button class="btn-ghost" id="s_cancel_btn" style="display:none;" onclick="cancelSalesEdit()">취소</button>
+      <button class="btn btn-main" id="s_submit_btn" onclick="submitSale()">판매 등록</button>
+    </div>
+  </div>
+</aside>
 
-<div class="statusbar">
-  <div>전체 매입: <b id="stat_total">0</b>건</div>
-  <div>재고: <b id="stat_stock">0</b>건</div>
-  <div>판매완료: <b id="stat_sold">0</b>건</div>
-  <div>총 마진: <b id="stat_margin">0</b>원</div>
-</div>
-</div>
+<div class="toast-wrap" id="toast_wrap" aria-live="polite"></div>
+</div><!-- /app -->
 
 <!-- 판매목록 IMEI 더블클릭 시 뜨는 매입정보 팝업 -->
 <div class="pm-backdrop" id="pm_backdrop">
@@ -839,6 +1119,8 @@
     </div>
   </div>
 </div>
+
+
 
 <!-- Firebase (compat SDK) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -1982,6 +2264,368 @@ function showScreen(which) {
     if (e.key === 'Escape') { closePurchaseModal(); }
     else if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') { savePurchaseModal(); }
   });
+</script>
+<!-- ===== 리뉴얼 화면 연결용 추가 스크립트 (위 원본 스크립트는 수정하지 않음) ===== -->
+<script>
+/* ================================================================
+   리뉴얼 화면용 추가 스크립트
+   - 위쪽의 기존 스크립트(파이어베이스 연결, 저장/수정/삭제 로직)는 한 글자도 바꾸지 않았고,
+     이 파일은 그 함수들을 "감싸서" 새 화면(슬라이드 오버, 차트, 뱃지 등)과 연결만 합니다.
+================================================================ */
+(function () {
+  var $id = function (id) { return document.getElementById(id); };
+
+  /* ---------- 다크 모드 ---------- */
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function paintThemeBtn() {
+    var b = $id('theme_btn');
+    if (b) b.innerHTML = currentTheme() === 'dark' ? '☀&nbsp; 라이트 모드' : '◐&nbsp; 다크 모드';
+  }
+  $id('theme_btn').addEventListener('click', function () {
+    var t = currentTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('aionio_theme', t); } catch (e) { /* 무시 */ }
+    paintThemeBtn();
+  });
+  paintThemeBtn();
+
+  /* ---------- 더보기 메뉴 ---------- */
+  var toolsBtn = $id('tools_btn'), toolsMenu = $id('tools_menu');
+  function closeTools() {
+    toolsMenu.classList.remove('show');
+    toolsBtn.setAttribute('aria-expanded', 'false');
+  }
+  toolsBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = toolsMenu.classList.toggle('show');
+    toolsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  toolsMenu.addEventListener('click', function (e) { if (e.target.tagName === 'BUTTON') closeTools(); });
+  document.addEventListener('click', function (e) { if (!toolsMenu.contains(e.target)) closeTools(); });
+
+  /* ---------- 토스트 알림 ---------- */
+  window.toast = function (msg, type) {
+    var wrap = $id('toast_wrap');
+    var t = document.createElement('div');
+    t.className = 'toast' + (type === 'err' ? ' err' : '');
+    t.textContent = msg;
+    wrap.appendChild(t);
+    setTimeout(function () {
+      t.classList.add('out');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 260);
+    }, 2400);
+  };
+  var _saveWrite = saveWrite;
+  saveWrite = async function (promise) {
+    var ok = await _saveWrite(promise);
+    if (ok) toast('저장되었습니다');
+    return ok;
+  };
+
+  /* ---------- 슬라이드 오버 (등록/수정 패널) ---------- */
+  var SO = { purchase: 'so_purchase', sales: 'so_sales' };
+  var soOpen = null;
+
+  function hideSlide(kind) {
+    if (!kind) return;
+    $id(SO[kind]).classList.remove('show');
+    $id('so_backdrop').classList.remove('show');
+    if (soOpen === kind) soOpen = null;
+  }
+  window.openSlide = function (kind, keepHint) {
+    if (soOpen && soOpen !== kind) hideSlide(soOpen);
+    if (kind === 'purchase') {
+      $id('so_p_title').textContent = pEditId ? '매입 수정' : '매입 등록';
+      if (!keepHint) { var ph = $id('p_hint'); ph.textContent = ''; ph.classList.remove('ok'); }
+      updImei();
+    } else {
+      $id('so_s_title').textContent = sEditId ? '판매 수정' : '판매 등록';
+      refreshImeiList();
+      if (!keepHint) {
+        if ($id('s_imei').value.trim()) { lookupImei(); }
+        else { var sh = $id('s_hint'); sh.textContent = ''; sh.classList.remove('ok'); }
+      }
+    }
+    $id(SO[kind]).classList.add('show');
+    $id('so_backdrop').classList.add('show');
+    soOpen = kind;
+    setTimeout(function () {
+      if (soOpen !== kind) return;
+      var el = kind === 'purchase' ? $id('p_model') : $id('s_imei');
+      if (el) el.focus();
+    }, 340);
+  };
+  window.closeSlide = function () {
+    if (!soOpen) return;
+    var k = soOpen;
+    if (k === 'purchase' && pEditId) cancelPurchaseEdit();
+    else if (k === 'sales' && sEditId) cancelSalesEdit();
+    hideSlide(k);
+  };
+
+  // 기존 함수 감싸기: 저장이 성공하면 패널을 닫고, 수정 버튼을 누르면 패널을 엽니다.
+  var _submitPurchase = submitPurchase;
+  submitPurchase = async function () {
+    await _submitPurchase();
+    var h = $id('p_hint');
+    if (h.classList.contains('ok') && $id('p_model').value === '') { hideSlide('purchase'); updImei(); }
+  };
+  var _submitSale = submitSale;
+  submitSale = async function () {
+    await _submitSale();
+    var h = $id('s_hint');
+    if (h.classList.contains('ok') && $id('s_imei').value === '') hideSlide('sales');
+  };
+  var _editPurchaseRow = editPurchaseRow;
+  editPurchaseRow = function (id) {
+    _editPurchaseRow(id);
+    if (pEditId === id) openSlide('purchase', true);
+  };
+  var _editSaleRow = editSaleRow;
+  editSaleRow = function (id) {
+    _editSaleRow(id);
+    if (sEditId === id) openSlide('sales', true);
+  };
+  var _cancelPurchaseEdit = cancelPurchaseEdit;
+  cancelPurchaseEdit = function () { _cancelPurchaseEdit(); hideSlide('purchase'); updImei(); };
+  var _cancelSalesEdit = cancelSalesEdit;
+  cancelSalesEdit = function () { _cancelSalesEdit(); hideSlide('sales'); };
+
+  /* ---------- 사이드바 메뉴 ---------- */
+  var TITLES = { purchase: '매입 관리', sales: '판매 관리', monthly: '대시보드' };
+  var _switchTab = switchTab;
+  switchTab = function (name) {
+    if (soOpen) closeSlide();
+    _switchTab(name);
+    $id('page_title').textContent = TITLES[name] || '';
+    $id('page-monthly').scrollTop = 0;
+  };
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t.click(); }
+    });
+  });
+
+  /* ---------- 표: 뱃지 / 건수 ---------- */
+  function gradeBadges(tbodyId, col) {
+    var body = $id(tbodyId);
+    if (!body) return;
+    body.querySelectorAll('td:nth-child(' + col + ')').forEach(function (td) {
+      if (td.querySelector('.badge')) return;
+      var g = td.textContent.trim();
+      if (/^[SABC]$/.test(g)) td.innerHTML = '<span class="badge badge-grade-' + g + '">' + g + '</span>';
+    });
+  }
+  function countRows(tbodyId, outId) {
+    $id(outId).textContent = $id(tbodyId).querySelectorAll('tr:not(.empty-row)').length + '건';
+  }
+  var _renderPurchases = renderPurchases;
+  renderPurchases = function () {
+    _renderPurchases();
+    countRows('p_table_body', 'p_count');
+    $id('nav_stock').textContent = purchases.filter(function (p) { return p.status === '재고'; }).length;
+  };
+  var _renderSales = renderSales;
+  renderSales = function () {
+    _renderSales();
+    gradeBadges('s_table_body', 6);
+    countRows('s_table_body', 's_count');
+  };
+
+  /* ---------- 대시보드: 카드 + 차트 ---------- */
+  var W = 640, H = 240, L = 42, R = 12, T = 16, B = 28, PW = W - L - R, PH = H - T - B;
+
+  function monthDays() { return new Date(viewYear, viewMonth + 1, 0).getDate(); }
+  function fmtK(v) {
+    var a = Math.abs(v);
+    if (a >= 1e8) return (v / 1e8).toFixed(1) + '억';
+    if (a >= 1e4) return Math.round(v / 1e4).toLocaleString() + '만';
+    return String(Math.round(v));
+  }
+  // 눈금을 1·2·2.5·5 단위의 보기 좋은 숫자로 맞춤
+  function niceScale(lo, hi) {
+    var rough = (hi - lo) / 4;
+    var mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    var f = rough / mag;
+    var nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+    var step = nf * mag;
+    return { lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step, step: step };
+  }
+  function dayOf(dateStr) { return Number(String(dateStr).split('-')[2]) || 0; }
+
+  function drawDaily(pIn, sIn) {
+    var days = monthDays(), buy = [], sell = [], d, i, max = 0;
+    for (d = 0; d <= days; d++) { buy[d] = 0; sell[d] = 0; }
+    pIn.forEach(function (p) { var x = dayOf(p.date); if (x >= 1 && x <= days) buy[x]++; });
+    sIn.forEach(function (s) { var x = dayOf(s.date); if (x >= 1 && x <= days) sell[x]++; });
+    for (d = 1; d <= days; d++) max = Math.max(max, buy[d], sell[d]);
+    var ticks = 4;
+    var step = Math.max(1, Math.ceil(max / 4));
+    var top = ticks * step;
+    var yv = function (v) { return T + PH * (1 - v / top); };
+    var s = '<svg class="chart-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="일별 매입 판매 건수 막대 차트">';
+    for (i = 0; i <= ticks; i++) {
+      var v = i * step, y = yv(v);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--border)" stroke-width="1"' + (i === 0 ? '' : ' stroke-dasharray="3 4"') + '/>';
+      s += '<text x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="var(--text-faint)">' + v + '</text>';
+    }
+    var slot = PW / days, bw = Math.max(2, Math.min(9, slot * 0.36));
+    for (d = 1; d <= days; d++) {
+      var cx = L + (d - 1) * slot + slot / 2;
+      s += '<g class="dayg"><title>' + (viewMonth + 1) + '월 ' + d + '일 · 매입 ' + buy[d] + '건 · 판매 ' + sell[d] + '건</title>';
+      s += '<rect class="hit" x="' + (L + (d - 1) * slot) + '" y="' + T + '" width="' + slot + '" height="' + PH + '"/>';
+      if (buy[d]) s += '<rect x="' + (cx - bw - 0.5) + '" y="' + yv(buy[d]) + '" width="' + bw + '" height="' + (yv(0) - yv(buy[d])) + '" rx="2" fill="var(--accent)"/>';
+      if (sell[d]) s += '<rect x="' + (cx + 0.5) + '" y="' + yv(sell[d]) + '" width="' + bw + '" height="' + (yv(0) - yv(sell[d])) + '" rx="2" fill="var(--success)"/>';
+      s += '</g>';
+      if (d === 1 || d % 5 === 0) s += '<text x="' + cx + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="11" fill="var(--text-faint)">' + d + '일</text>';
+    }
+    if (max === 0) s += '<text class="chart-empty" x="' + (L + PW / 2) + '" y="' + (T + PH / 2) + '" text-anchor="middle">이 달에 등록된 매입 · 판매 내역이 없습니다</text>';
+    $id('chart_daily').innerHTML = s + '</svg>';
+  }
+
+  function drawCum(sIn, marginSum) {
+    var days = monthDays(), now = new Date(), d, i;
+    var isCur = viewYear === now.getFullYear() && viewMonth === now.getMonth();
+    var perDay = [];
+    for (d = 0; d <= days; d++) perDay[d] = 0;
+    var maxDay = 0;
+    sIn.forEach(function (s) {
+      var x = dayOf(s.date);
+      if (x >= 1 && x <= days) { perDay[x] += Number(s.margin) || 0; maxDay = Math.max(maxDay, x); }
+    });
+    var last = Math.max(isCur ? now.getDate() : days, maxDay);
+    var cum = [], run = 0, lo = 0, hi = 0;
+    for (d = 1; d <= last; d++) { run += perDay[d]; cum[d] = run; lo = Math.min(lo, run); hi = Math.max(hi, run); }
+    if (hi === lo) hi = lo + 4;
+    var ns = niceScale(lo, hi);
+    lo = ns.lo; hi = ns.hi;
+    var yv = function (v) { return T + PH * (1 - (v - lo) / (hi - lo)); };
+    var xv = function (day) { return days === 1 ? L + PW / 2 : L + (day - 1) / (days - 1) * PW; };
+    var s = '<svg class="chart-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="누적 마진 추이 선 차트">';
+    s += '<defs><linearGradient id="cumGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--success)" stop-opacity="0.3"/><stop offset="1" style="stop-color:var(--success)" stop-opacity="0.02"/></linearGradient></defs>';
+    for (i = 0; lo + ns.step * i <= hi + ns.step / 2; i++) {
+      var v = Math.round(lo + ns.step * i), y = yv(v);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--border)" stroke-width="1"' + (i === 0 ? '' : ' stroke-dasharray="3 4"') + '/>';
+      s += '<text x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="var(--text-faint)">' + fmtK(v) + '</text>';
+    }
+    var y0 = yv(Math.max(lo, 0));
+    if (lo < 0) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yv(0) + '" y2="' + yv(0) + '" stroke="var(--text-faint)" stroke-width="1"/>';
+    var pts = [];
+    for (d = 1; d <= last; d++) pts.push(xv(d).toFixed(1) + ',' + yv(cum[d]).toFixed(1));
+    if (maxDay > 0) {
+      s += '<path d="M' + xv(1).toFixed(1) + ',' + y0.toFixed(1) + ' L' + pts.join(' L') + ' L' + xv(last).toFixed(1) + ',' + y0.toFixed(1) + ' Z" fill="url(#cumGrad)"/>';
+      s += '<polyline fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '"/>';
+      for (d = 1; d <= last; d++) {
+        if (perDay[d] !== 0) {
+          s += '<circle cx="' + xv(d).toFixed(1) + '" cy="' + yv(cum[d]).toFixed(1) + '" r="3.8" fill="var(--surface)" stroke="var(--success)" stroke-width="2"><title>' +
+            (viewMonth + 1) + '월 ' + d + '일 · 누적 마진 ' + comma(cum[d]) + '원</title></circle>';
+        }
+      }
+    } else {
+      s += '<text class="chart-empty" x="' + (L + PW / 2) + '" y="' + (T + PH / 2) + '" text-anchor="middle">이 달의 판매 내역이 없습니다</text>';
+    }
+    for (d = 1; d <= days; d++) {
+      if (d === 1 || d % 5 === 0) s += '<text x="' + xv(d).toFixed(1) + '" y="' + (T + PH + 18) + '" text-anchor="middle" font-size="11" fill="var(--text-faint)">' + d + '일</text>';
+    }
+    $id('chart_cum').innerHTML = s + '</svg>';
+    $id('chart_cum_total').textContent = '합계 ' + comma(marginSum) + '원';
+  }
+
+  function drawGrade(stock) {
+    var cnt = { S: 0, A: 0, B: 0, C: 0 };
+    stock.forEach(function (p) { if (cnt[p.grade] != null) cnt[p.grade]++; });
+    var max = Math.max(cnt.S, cnt.A, cnt.B, cnt.C, 1);
+    $id('chart_grade_sub').textContent = '현재 재고 ' + stock.length + '건';
+    if (!stock.length) { $id('chart_grade').innerHTML = '<div class="gd-empty">재고가 없습니다.</div>'; return; }
+    var colors = { S: 'var(--amber)', A: 'var(--success)', B: 'var(--accent)', C: 'var(--danger)' };
+    var html = '';
+    ['S', 'A', 'B', 'C'].forEach(function (g) {
+      html += '<div class="gd-row"><span class="badge badge-grade-' + g + '">' + g + '</span>' +
+        '<div class="gd-track"><div class="gd-fill" style="width:' + (cnt[g] / max * 100) + '%;background:' + colors[g] + '"></div></div>' +
+        '<b>' + cnt[g] + '건</b></div>';
+    });
+    $id('chart_grade').innerHTML = html;
+  }
+
+  function dashExtras() {
+    var stock = purchases.filter(function (p) { return p.status === '재고'; });
+    var stockVal = stock.reduce(function (a, p) { return a + (Number(p.cost) || 0); }, 0);
+    $id('m_stat_stock').textContent = stock.length + '건';
+    $id('m_stat_stockval').textContent = '재고 원가 합계 ' + comma(stockVal) + '원';
+    var pIn = purchases.filter(function (p) { return inViewMonth(p.date); });
+    var sIn = sales.filter(function (s) { return inViewMonth(s.date); });
+    var priceSum = sIn.reduce(function (a, s) { return a + (Number(s.price) || 0); }, 0);
+    var marginSum = sIn.reduce(function (a, s) { return a + (Number(s.margin) || 0); }, 0);
+    $id('m_stat_rate').textContent = priceSum > 0 ? (marginSum / priceSum * 100).toFixed(1) + '%' : '-';
+    drawDaily(pIn, sIn);
+    drawCum(sIn, marginSum);
+    drawGrade(stock);
+  }
+  var _renderMonthly = renderMonthly;
+  renderMonthly = function () {
+    _renderMonthly();
+    gradeBadges('m_purchase_table', 6);
+    dashExtras();
+  };
+
+  /* ---------- IMEI 입력 도우미 (자릿수 / 체크숫자 안내 — 저장을 막지는 않습니다) ---------- */
+  function luhn(d) {
+    var sum = 0, alt = false;
+    for (var i = d.length - 1; i >= 0; i--) {
+      var n = d.charCodeAt(i) - 48;
+      if (alt) { n *= 2; if (n > 9) n -= 9; }
+      sum += n; alt = !alt;
+    }
+    return sum % 10 === 0;
+  }
+  function updImei() {
+    var v = $id('p_imei').value.trim(), h = $id('p_imei_help');
+    if (!v) { h.textContent = ''; h.className = 'imei-help'; return; }
+    var d = v.replace(/\D/g, '');
+    if (d.length === 15) {
+      if (luhn(d)) { h.textContent = '15자리 ✓ 유효'; h.className = 'imei-help ok'; }
+      else { h.textContent = '15자리 · 체크숫자 불일치 (오타 확인)'; h.className = 'imei-help warn'; }
+    } else {
+      h.textContent = d.length + ' / 15자리'; h.className = 'imei-help';
+    }
+  }
+  $id('p_imei').addEventListener('input', updImei);
+
+  /* ---------- 키보드 ---------- */
+  function isTyping(el) {
+    return el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  }
+  document.addEventListener('keydown', function (e) {
+    var pmOpen = $id('pm_backdrop').classList.contains('show');
+    if (e.key === 'Escape') {
+      closeTools();
+      if (soOpen && !pmOpen) closeSlide();
+      return;
+    }
+    // 등록 패널 안에서 Enter → 다음 칸으로 이동, 마지막 칸이면 등록
+    if (e.key === 'Enter' && soOpen && !e.isComposing && e.target && e.target.tagName === 'INPUT') {
+      var panel = $id(SO[soOpen]);
+      if (!panel.contains(e.target)) return;
+      if (e.target.id === 's_imei' && !sMatched) return;
+      var list = [].slice.call(panel.querySelectorAll('.so-body input:not([readonly]), .so-body select'));
+      var idx = list.indexOf(e.target);
+      e.preventDefault();
+      if (idx >= 0 && idx < list.length - 1) list[idx + 1].focus();
+      else panel.querySelector('.so-actions .btn-main').click();
+      return;
+    }
+    // N 키 → 현재 화면의 등록 패널 열기
+    if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        !soOpen && !pmOpen && !isTyping(e.target) && $id('app').style.display === 'block') {
+      var act = document.querySelector('.tab.active');
+      if (act && act.dataset.tab === 'purchase') { e.preventDefault(); openSlide('purchase'); }
+      else if (act && act.dataset.tab === 'sales') { e.preventDefault(); openSlide('sales'); }
+    }
+  });
+})();
+
 </script>
 </body>
 </html>
