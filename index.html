@@ -1992,7 +1992,18 @@ function showScreen(which) {
 
   // 어플처럼 설치·오프라인 실행되도록 서비스워커 등록 (웹 주소로 열었을 때만)
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
-    navigator.serviceWorker.register('./sw.js').catch(function () { /* 실패해도 앱 동작에는 지장 없음 */ });
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(function (reg) {
+      reg.update(); // 열 때마다 sw.js 새 버전 확인
+      setInterval(function () { reg.update(); }, 60 * 1000); // 켜둔 채로도 1분마다 확인
+    }).catch(function () { /* 실패해도 앱 동작에는 지장 없음 */ });
+    // 새 서비스워커가 적용되면 자동으로 한 번 새로고침해서 최신 화면으로 교체
+    var hadController = !!navigator.serviceWorker.controller;
+    var reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloaded) { hadController = true; return; }
+      reloaded = true;
+      location.reload();
+    });
   }
 
   if (!isConfigured()) {
